@@ -19,16 +19,18 @@ import Avatar from "../../components/Avatar";
 
 
 const Home = () => {
-  const { setAuth } = useAuth();
+  const {user , setAuth } = useAuth();
   const router = useRouter();
 
-  const onLogout = async () => {
-    setAuth(null);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      Alert.alert("cerrar sesion", error.message);
-    }
-  };
+  console.log('user:' , user);
+
+  // const onLogout = async () => {
+  //   setAuth(null);
+  //   const { error } = await supabase.auth.signOut();
+  //   if (error) {
+  //     Alert.alert("cerrar sesion", error.message);
+  //   }
+  // };
   return (
     <ScreenWrapper bg="white"> 
       <View style={styles.container}>
@@ -54,7 +56,7 @@ const Home = () => {
           </View>
         </View>
       </View>
-      <Button title="cerrar sesion" onPress={onLogout} />
+      {/* <Button title="cerrar sesion" onPress={onLogout} /> */}
     </ScreenWrapper>
   );
 };

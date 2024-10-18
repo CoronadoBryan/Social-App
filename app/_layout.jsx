@@ -27,7 +27,7 @@ const MainLayout = () => {
             if(session){
 
                 setAuth(session?.user);
-                updateUserData(session.user);
+                updateUserData(session.user, session?.user?.email);
                 router.replace('/home')
 
             }else{
@@ -39,9 +39,9 @@ const MainLayout = () => {
         })
     }, []) //sirve para que solo se ejecute una vez
 
-    const updateUserData = async (user) => {
+    const updateUserData = async (user, email) => {
         let res = await getUserData (user?.id);
-        if(res.success) setUserData(res.data);
+        if(res.success) setUserData({...res.data, email});
     }
     
   return (
