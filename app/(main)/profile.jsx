@@ -60,7 +60,7 @@ const UserHeader = ({ user, router, handleLogout }) => {
       </View>
       <View style={styles.container}>
         <View style={styles.avatarContainer}>
-          <Avatar uri={user?.user_metadata?.image} size={hp(12)} rounded={theme.radius.xxl} />
+          <Avatar uri={user?.image} size={hp(12)} rounded={theme.radius.xxl} />
           <Pressable style={styles.editIcon} onPress={() => router.push("editProfile")}>
             <Icon name="edit" strokeWidth={2.5} size={20} />
           </Pressable>
@@ -136,8 +136,20 @@ const styles = StyleSheet.create({
     position: "absolute",
     padding: 8,
     right: 0,
-    top: 5,
+    marginTop: -55,
     borderRadius: theme.radius.sm,
     backgroundColor: "#fee2e2",
   },
+  info: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 5,
+  },
+  infoText: {
+    fontSize: hp(2.2),
+    color: theme.colors.textDark,
+    textAlign: "center", // Centrar el texto dentro del elemento
+  },
+
 });

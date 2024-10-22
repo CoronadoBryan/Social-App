@@ -5,7 +5,7 @@ import { theme } from '../constants/theme';
 
 const Input = (props) => {
   return (
-    <View style={[styles.container, props.containerStyles && props.containerStyles]}>
+    <View style={[styles.container, props.containerStyle && props.containerStyle]}>
       {props.icon && props.icon}
       <TextInput
         style={{ flex: 1 }}
@@ -25,8 +25,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1, 
-    borderColor: theme.colors.text, 
-    borderRadius: theme.radius.xl, 
+    borderColor: theme.colors.gray, 
+    borderRadius: theme.radius.xxl, 
     paddingHorizontal: 14, 
     gap: 8, 
   }

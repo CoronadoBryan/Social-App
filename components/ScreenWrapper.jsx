@@ -3,6 +3,8 @@ import React from 'react'
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+
+//sirve para envolver las pantallas y agregar un padding top
 const ScreenWrapper = ({children , bg}) => {
 
     const {top} = useSafeAreaInsets();
@@ -16,5 +18,7 @@ const ScreenWrapper = ({children , bg}) => {
     </View>
   )
 }
+
+
 
 export default ScreenWrapper

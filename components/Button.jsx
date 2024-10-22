@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderCurve: "continuous",
-    borderRadius: theme.radius.xl,
+    borderRadius: theme.radius.xxl,
   },
   text: {
     color: "#fff",
