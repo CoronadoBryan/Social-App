@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { Button } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
-import { user } from "../../services/userService";
+import { getUserData, user } from "../../services/userService";
 import { supabase } from "../../lib/supabase";
 import { theme } from "../../constants/theme";
 import { hp, wp } from "../../helpers/common";
@@ -24,18 +24,42 @@ const Home = () => {
   const router = useRouter();
 
   const [posts, setPosts] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
+
+  const handlePostEvent = async (payload) => {
+    console.log("post event", payload);
+    if (payload.eventType == "INSERT" && payload?.new?.id) {
+      let newPost = { ...payload.new };
+      let res = await getUserData(newPost.userId);
+      newPost.user = res.success ? res.data : {};
+      setPosts((prevPosts) => [newPost, ...prevPosts]);
+    }
+  };
 
   useEffect(() => {
-    getPosts();
+    const postChannel = supabase
+      .channel("posts") // Nombre del canal
+      .on(
+        "postgres_changes", // Tipo de evento
+        { event: "*", schema: "public", table: "posts" }, // Filtro específico
+        (payload) => handlePostEvent(payload) // Función de callback
+      )
+      .subscribe();
+
+    // getPosts(); // Llama a la función de carga inicial de posts
+
+    return () => {
+      supabase.removeChannel(postChannel); // Elimina el canal al desmontar el componente
+    };
   }, []);
 
   const getPosts = async () => {
-    limit = limit + 10;
-    let res = await fechPosts();
-    // console.log("got post result", res.data);
+    if (!hasMore) return null;
+    limit = limit + 4;
     console.log("got post result", limit);
-    // console.log ('user:', res.data[0].user);
+    let res = await fechPosts(limit);
     if (res.success) {
+      if (posts.length == res.data.length) setHasMore(false);
       setPosts(res.data);
     }
   };
@@ -90,18 +114,24 @@ const Home = () => {
           contentContainerStyle={styles.listStyles}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <PostCard 
-            item={item} 
-            currentUser={user} 
-            router={router} 
-            />
-          )
-        }
-        ListFooterComponent={(
-          <View style={{marginVertical:posts.length==0? 200: 30}} >
-            <Loading/>
-          </View>
-        )}
+            <PostCard item={item} currentUser={user} router={router} />
+          )}
+          onEndReached={() => {
+            getPosts();
+            console.log("end reached");
+          }}
+          onEndReachedThreshold={0.1}
+          ListFooterComponent={
+            hasMore ? (
+              <View style={{ marginVertical: posts.length == 0 ? 200 : 30 }}>
+                <Loading />
+              </View>
+            ) : (
+              <View style={{ marginVertical: 30 }}>
+                <Text style={styles.noPost}>ya no hay mas publicaciones</Text>
+              </View>
+            )
+          }
         />
       </View>
     </ScreenWrapper>

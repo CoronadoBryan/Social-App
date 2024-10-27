@@ -45,7 +45,12 @@ export const fechPosts = async (limit=10) => {
 
         const {data , error} = await supabase
         .from('posts')
-        .select(`*,user:users (id,name,image)`)
+        .select(
+          `*,
+          user:users (id,name,image),
+           postLikes(*)
+
+        `)
         .order('created_at', {ascending: false})
         .limit(limit);
 
@@ -61,5 +66,49 @@ export const fechPosts = async (limit=10) => {
       console.log(error);
       return { success: false, error, msg: "   " };
     }
-  };
+};
+  
+export const createPostLike = async (postLike) => {
+    try {
+      const { data, error } = await supabase
+        .from('postLikes')
+        .insert(postLike)
+        .select()
+        .single();
+
+        if(error){
+            console.log("postLike error", error);
+            return {success: false, error, msg: "Error al obtener los likes del post"};
+        }
+
+        return {success: true , data :data}
+      
+  
+    } catch (error) {
+      console.log(error);
+      return { success: false, error, msg: "   " };
+    }
+};
+export const removePostLike = async (postId,userId) => {
+    try {
+      const {error} = await supabase
+        .from('postLikes')
+        .delete()
+        .eq('userId', userId)
+        .eq('postId', postId);
+        
+
+        if(error){
+            console.log("remover el like error", error);
+            return {success: false, error, msg: "Error remover el like del post"};
+        }
+
+        return {success: true }
+      
+  
+    } catch (error) {
+      console.log(error);
+      return { success: false, error, msg: "   " };
+    }
+};
   

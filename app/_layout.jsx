@@ -1,65 +1,58 @@
-import { View, Text, LogBox } from 'react-native'
-import React, { useEffect } from 'react'
-import { router, Stack } from 'expo-router'
-import { AuthProvider } from '../contexts/AuthContext'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
-import { getUserData } from '../services/userService'
-
+import { View, Text, LogBox } from "react-native";
+import React, { useEffect } from "react";
+import { router, Stack } from "expo-router";
+import { AuthProvider } from "../contexts/AuthContext";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
+import { getUserData } from "../services/userService";
 
 LogBox.ignoreLogs([
-  'Warning. TNodeChildrenRenderer', 
-  'Warning: MemoizedTNodeRenderer', 
-  'Warning: TRendeEngineProvider', 
-  'Warning: TNodeChildrenRenderer',
-  'Warning: TNodeChildrenRenderer'
-]);
+  "Warning. TNodeChildrenRenderer",
+  "Warning: MemoizedTNodeRenderer",
+  "Warning: TRendeEngineProvider",
+  "Warning: TNodeChildrenRenderer"
+  
 
+]);
 
 const _layout = () => {
   return (
     <AuthProvider>
-        <MainLayout />
+      <MainLayout />
     </AuthProvider>
-  )
-}
-
+  );
+};
 
 const MainLayout = () => {
-     
-    const { setAuth, setUserData } = useAuth();
+  const { setAuth, setUserData } = useAuth();
 
-    useEffect(() => {
-        supabase.auth.onAuthStateChange((_event, session) =>{
-            console.log('session user :', session?.user.id)
+  useEffect(() => {
+    supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("session user :", session?.user.id);
 
-            if(session){
+      if (session) {
+        setAuth(session?.user);
+        updateUserData(session.user, session?.user?.email);
+        router.replace("/home");
+      } else {
+        setAuth(null);
+        router.replace("/welcome");
+      }
+    });
+  }, []); //sirve para que solo se ejecute una vez
 
-                setAuth(session?.user);
-                updateUserData(session.user, session?.user?.email);
-                router.replace('/home')
+  const updateUserData = async (user, email) => {
+    let res = await getUserData(user?.id);
+    if (res.success) setUserData({ ...res.data, email });
+  };
 
-            }else{
-                setAuth(null);
-                router.replace('/welcome')
-
-            }
-        
-        })
-    }, []) //sirve para que solo se ejecute una vez
-
-    const updateUserData = async (user, email) => {
-        let res = await getUserData (user?.id);
-        if(res.success) setUserData({...res.data, email});
-    }
-    
   return (
     <Stack
-        screenOptions={{
-            headerShown: false
-        }}
+      screenOptions={{
+        headerShown: false,
+      }}
     />
-  )
-}
+  );
+};
 
-export default _layout
+export default _layout;

@@ -1,15 +1,19 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import React from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { theme } from '../constants/theme';
 import { hp , wp } from '../helpers/common';
+import { stripHtmlTags } from '../helpers/common';
 import Avatar from '../components/Avatar';
 import moment from 'moment';
 import 'moment/locale/es';  // Importar español para moment
 import Icon from "../assets/icons";
 import RenderHTML from 'react-native-render-html';
-import { getSupabaseFileUrl } from '../services/imageService';
+import { downloadFile, getSupabaseFileUrl } from '../services/imageService';
 import { Image } from 'expo-image';
-import { Video } from 'expo-av';  // Corregido
+import { Video } from 'expo-av'; 
+import { createPostLike, removePostLike } from '../services/postService';
+import { Share } from 'react-native';
+ 
 /// Configurar moment para usar español
 moment.locale('es');
 
@@ -53,16 +57,59 @@ const PostCard = ({
         elevation: 1,
     };
 
+    const [likes, setLikes]= useState([]);
+
+    useEffect(() => {
+
+        setLikes(item?.postLikes);
+
+    },[]);
+
     const openPostDetails = () => {
 
     }
 
+    const onLike = async () => {
+        if(liked){
+            let updatedlikes = likes.filter(like=> like.userId!= currentUser?.id); 
+            setLikes([...updatedlikes]);
+            let res= await removePostLike(item?.id, currentUser?.id);
+            console.log('se quito el like', res);
+            if(!res.success){
+                Alert.alert("post", 'something went wrong'); 
+            }
+        }else{
+            let data ={
+                userId: currentUser?.id,
+                postId: item?.id,
+            }
+            setLikes([...likes,  data]);
+            let res= await createPostLike(data);
+            console.log('agrego el like', res);
+            if(!res.success){
+                Alert.alert("post", 'something went wrong'); 
+            }
+
+        }
+        
+    }
+
+    const onShare = async () => {
+        let content = { message: stripHtmlTags(item?.body) };
+    
+        if (item?.file) {
+            // Descarga el archivo y luego comparte la URI local
+            let url = await downloadFile(getSupabaseFileUrl(item?.file).uri);
+            content.url = url;
+        }
+    
+        Share.share(content);
+    };
+    
+
     // Formatear la fecha en español
     const created_at = moment(item?.created_at).format('dddd, D [de] MMMM [de] YYYY, h:mm a');
-    const likes=[
-
-    ]
-    const liked=false;
+    const liked=likes.filter(like=> like.userId == currentUser?.id)[0]? true: false;
     return (
         <View style={[styles.container, hasShadow && shadowStyles]}>
             <View style={styles.header}>
@@ -127,7 +174,7 @@ const PostCard = ({
 
             <View style={styles.footer}>
                 <View style={styles.footerButton}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={onLike} >
                         <Icon name="heart" fill={liked? theme.colors.rose: "transparent"} size={hp(3.2)} strokeWidth={2} color={liked? theme.colors.rose: theme.colors.textLight} />
                     </TouchableOpacity>
                     <Text>
@@ -147,7 +194,7 @@ const PostCard = ({
                     </Text>
                 </View>
                 <View style={styles.footerButton}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={onShare}>
                         <Icon name="share" size={hp(3.2)} strokeWidth={2} color={liked? theme.colors.rose: theme.colors.textLight} />
                     </TouchableOpacity>
                    
