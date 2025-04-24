@@ -13,7 +13,9 @@ import { Image } from 'expo-image';
 import { Video } from 'expo-av'; 
 import { createPostLike, removePostLike } from '../services/postService';
 import { Share } from 'react-native';
- 
+import CommentsModal from './CommentsModal'; // crea este componente
+import { fetchComments } from '../services/commentService'; // Asegúrate de importar esto
+
 /// Configurar moment para usar español
 moment.locale('es');
 
@@ -60,10 +62,22 @@ const PostCard = ({
     const [likes, setLikes]= useState([]);
     const [showLikesModal, setShowLikesModal] = useState(false);
     const [showImageModal, setShowImageModal] = useState(false);
+    const [showComments, setShowComments] = useState(false);
+    const [commentsCount, setCommentsCount] = useState(0);
+    const [lastComments, setLastComments] = useState([]);
 
     useEffect(() => {
 
         setLikes(item?.postLikes);
+        // Cargar los últimos comentarios y el contador
+        const loadCommentsPreview = async () => {
+            const res = await fetchComments(item.id);
+            if (res.success) {
+                setCommentsCount(res.data.length);
+                setLastComments(res.data.slice(-2)); // Los dos últimos
+            }
+        };
+        loadCommentsPreview();
 
     },[]);
 
@@ -191,13 +205,11 @@ const PostCard = ({
                     </Text>
                 </View>
                 <View style={styles.footerButton}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => setShowComments(true)}>
                         <Icon name="comment" size={hp(3.2)} strokeWidth={2} color={theme.colors.rose} />
                     </TouchableOpacity>
                     <Text>
-                        {
-                            0
-                        }
+                        {commentsCount}
                     </Text>
                 </View>
                 <View style={styles.footerButton}>
@@ -349,6 +361,53 @@ const PostCard = ({
                 </Modal>
             </View>
 
+            {commentsCount > 0 && (
+                <TouchableOpacity onPress={() => setShowComments(true)}>
+                    <Text style={{ color: theme.colors.primaryDark, marginTop: 4, fontWeight: 'bold' }}>
+                        Ver los {commentsCount} comentarios
+                    </Text>
+                </TouchableOpacity>
+            )}
+            {lastComments.map((c) => (
+                <View
+                    key={c.id}
+                    style={{
+                    flexDirection: "row",
+                    alignItems: "flex-start",
+                    marginTop: 6,
+                    marginBottom: 2,
+                    backgroundColor: "#F7F7F7",
+                    borderRadius: 12,
+                    paddingVertical: 7,
+                    paddingHorizontal: 10,
+                    marginRight: 8,
+                    marginLeft: 0,
+                    shadowColor: "#000",
+                    shadowOpacity: 0.03,
+                    shadowRadius: 1,
+                    elevation: 1,
+                    }}
+                >
+                    <Avatar
+                    uri={c.user?.image}
+                    size={hp(2.7)}
+                    rounded={hp(1.2)}
+                    style={{ marginRight: 8, borderWidth: 1, borderColor: "#eee", backgroundColor: "#fff" }}
+                    />
+                    <View style={{ flex: 1 }}>
+                    <Text style={{ fontWeight: "bold", color: theme.colors.textDark, fontSize: hp(1.6) }}>
+                        {c.user?.name || "Usuario"}
+                        <Text style={{ color: theme.colors.textLight, fontWeight: "normal", fontSize: hp(1.2) }}>
+                        {"  · "}{moment(c.created_at).fromNow()}
+                        </Text>
+                    </Text>
+                    <Text style={{ color: theme.colors.text, fontSize: hp(1.6), marginTop: 1 }}>
+                        {c.text}
+                    </Text>
+                    </View>
+                </View>
+                ))}
+
             <Modal
                 visible={showImageModal}
                 transparent
@@ -369,6 +428,13 @@ const PostCard = ({
                     </TouchableOpacity>
                 </View>
             </Modal>
+
+            <CommentsModal
+                visible={showComments}
+                onClose={() => setShowComments(false)}
+                postId={item.id}
+                currentUser={currentUser}
+            />
 
         </View>
     );
