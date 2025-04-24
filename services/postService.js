@@ -42,14 +42,12 @@ export const createOrUpdatePost = async (post) => {
 //sirve ara obtener los post limitados a 10 eso quiere decir que 
 export const fechPosts = async (limit=10) => {
     try {
-
         const {data , error} = await supabase
         .from('posts')
         .select(
           `*,
           user:users (id,name,image),
-           postLikes(*)
-
+          postLikes(*, user:users(id,name,image))
         `)
         .order('created_at', {ascending: false})
         .limit(limit);
@@ -60,8 +58,6 @@ export const fechPosts = async (limit=10) => {
         }
 
         return {success: true , data :data}
-      
-  
     } catch (error) {
       console.log(error);
       return { success: false, error, msg: "   " };
@@ -111,4 +107,4 @@ export const removePostLike = async (postId,userId) => {
       return { success: false, error, msg: "   " };
     }
 };
-  
+

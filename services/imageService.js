@@ -16,14 +16,7 @@ export const getSupabaseFileUrl = filePath =>{
         return { uri: `${supabaseUrl}/storage/v1/object/public/uploads/${filePath}` };
         }
         return null;
-    }
-
-
-
-
-
-
-
+}
 
 
 export const downloadFile = async (url) => {

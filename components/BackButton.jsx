@@ -1,27 +1,23 @@
-import { StyleSheet, Text, View } from "react-native";
-import { theme } from "../constants/theme";
-import { Pressable } from "react-native";
+import { StyleSheet, Pressable } from "react-native";
 import React from "react";
 import Icon from "../assets/icons";
-import { useNavigation } from "@react-navigation/native";
-
+import { theme } from "../constants/theme";
+import { useRouter } from "expo-router";
 
 const BackButton = ({ size = 26 }) => {
-    const navigation = useNavigation();
-  
-    return (
-      <Pressable onPress={() => navigation.goBack()} style={styles.button}>
-        <Icon
-          name="arrowLeft"
-          strokeWidth={2.5}
-          size={size}
-          color={theme.colors.text}
-        />
-      </Pressable>
-    );
-};
-  
+  const router = useRouter();
 
+  return (
+    <Pressable onPress={() => router.back()} style={styles.button}>
+      <Icon
+        name="arrowLeft"
+        strokeWidth={2.5}
+        size={size}
+        color={theme.colors.text}
+      />
+    </Pressable>
+  );
+};
 
 export default BackButton;
 

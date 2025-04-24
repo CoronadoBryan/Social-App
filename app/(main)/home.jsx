@@ -25,6 +25,7 @@ const Home = () => {
 
   const [posts, setPosts] = useState([]);
   const [hasMore, setHasMore] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const handlePostEvent = async (payload) => {
     console.log("post event", payload);
@@ -46,7 +47,7 @@ const Home = () => {
       )
       .subscribe();
 
-    // getPosts(); // Llama a la función de carga inicial de posts
+     getPosts(); // Llama a la función de carga inicial de posts
 
     return () => {
       supabase.removeChannel(postChannel); // Elimina el canal al desmontar el componente
@@ -59,9 +60,27 @@ const Home = () => {
     console.log("got post result", limit);
     let res = await fechPosts(limit);
     if (res.success) {
+      // Si ya tienes todos los posts, detén la carga
       if (posts.length == res.data.length) setHasMore(false);
-      setPosts(res.data);
+
+      // Acumula los posts, evitando duplicados
+      setPosts((prev) => {
+        const ids = new Set(prev.map((p) => p.id));
+        const nuevos = res.data.filter((p) => !ids.has(p.id));
+        return [...prev, ...nuevos];
+      });
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    limit = 4; // Reinicia el límite para refrescar desde el inicio
+    let res = await fechPosts(limit);
+    if (res.success) {
+      setPosts(res.data); // Reemplaza los posts por los más recientes
+      setHasMore(true);
+    }
+    setRefreshing(false);
   };
 
   // console.log('user:' , user);
@@ -132,6 +151,8 @@ const Home = () => {
               </View>
             )
           }
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       </View>
     </ScreenWrapper>

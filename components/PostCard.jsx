@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { theme } from '../constants/theme';
 import { hp , wp } from '../helpers/common';
@@ -58,6 +58,8 @@ const PostCard = ({
     };
 
     const [likes, setLikes]= useState([]);
+    const [showLikesModal, setShowLikesModal] = useState(false);
+    const [showImageModal, setShowImageModal] = useState(false);
 
     useEffect(() => {
 
@@ -110,6 +112,10 @@ const PostCard = ({
     // Formatear la fecha en español
     const created_at = moment(item?.created_at).format('dddd, D [de] MMMM [de] YYYY, h:mm a');
     const liked=likes.filter(like=> like.userId == currentUser?.id)[0]? true: false;
+    const MAX_VISIBLE_LIKES = 5;
+    const visibleLikes = item.postLikes.filter(like => like.user).slice(0, MAX_VISIBLE_LIKES);
+    const extraLikes = item.postLikes.length - visibleLikes.length;
+
     return (
         <View style={[styles.container, hasShadow && shadowStyles]}>
             <View style={styles.header}>
@@ -148,24 +154,25 @@ const PostCard = ({
             {/* media */}
             {
                 item?.file && item?.file?.includes('postImages') && (
+                    <TouchableOpacity onPress={() => setShowImageModal(true)}>
                         <Image
                             source={getSupabaseFileUrl(item?.file)}
-                            transition={100}
                             style={styles.postMedia}
-                            constentFit="cover"
+                            resizeMode="cover" // Esto asegura que la imagen cubra el área sin deformarse
                         />
+                    </TouchableOpacity>
                 )
             }
             {/* post del video */}
 
             {
-                item?.file && item?.file?.includes('postVideos') &&(
+                item?.file && item?.file?.includes('postVideos') && (
                     <Video
-                    style={[styles.postMedia, {height: hp(30)}]}
-                    source={getSupabaseFileUrl(item?.file)}
-                    useNativeControls
-                    resizeMode="cover"
-                    isLooping
+                        style={{ width: '100%', height: hp(30), borderRadius: theme.radius.xxl, marginTop: 8, marginBottom: 8 }}
+                        source={getSupabaseFileUrl(item?.file)}
+                        useNativeControls
+                        resizeMode="cover"
+                        isLooping
                     />
                 )
             }
@@ -200,7 +207,168 @@ const PostCard = ({
                    
                 </View>
             </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+                {visibleLikes.map(like => (
+                    <View key={like.id || like.userId} style={{ alignItems: 'center', marginRight: 8 }}>
+                        <Avatar
+                        uri={like.user.image}
+                        size={hp(2.5)}
+                        rounded={theme.radius.sm}
+                        style={{ marginRight: 2, borderWidth: 1, borderColor: theme.colors.gray }}
+                        />
+                    </View>
+                ))}
+                {extraLikes > 0 && (
+                    <TouchableOpacity onPress={() => setShowLikesModal(true)} style={{ marginRight: 8 }}>
+                        <View style={{
+                        width: hp(2.5), height: hp(2.5), borderRadius: theme.radius.sm,
+                        backgroundColor: theme.colors.gray, alignItems: 'center', justifyContent: 'center'
+                        }}>
+                        <Icon name="threeDotsHorizontal" size={hp(2)} color={theme.colors.textDark} />
+                        </View>
+                    </TouchableOpacity>
+                )}
+                {item.postLikes.length > 0 && (
+                    <Text style={{ fontSize: hp(1.5), color: theme.colors.textDark, marginLeft: 4 }}>
+                        {item.postLikes.length} {item.postLikes.length === 1 ? 'like' : 'likes'}
+                    </Text>
+                )}
 
+                {/* Modal para mostrar la lista completa */}
+                <Modal
+                visible={showLikesModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowLikesModal(false)}
+                >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.35)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <View style={{
+                    backgroundColor: 'white',
+                    borderRadius: 28,
+                    paddingVertical: 30,
+                    paddingHorizontal: 24,
+                    width: '85%',
+                    maxHeight: '65%',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.18,
+                    shadowRadius: 12,
+                    elevation: 8,
+                    alignItems: 'center'
+                    }}>
+                    <Text style={{
+                        fontWeight: 'bold',
+                        fontSize: hp(2.4),
+                        marginBottom: 18,
+                        color: theme.colors.primaryDark,
+                        letterSpacing: 0.5
+                    }}>
+                        Usuarios que dieron like
+                    </Text>
+                    <ScrollView style={{ width: '100%' }} contentContainerStyle={{ paddingBottom: 10 }}>
+                        {item.postLikes.filter(like => like.user).map(like => (
+                        <View
+                            key={like.id || like.userId}
+                            style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginBottom: 14,
+                            backgroundColor: '#F7F7F7',
+                            borderRadius: 50,
+                            paddingVertical: 10,
+                            paddingHorizontal: 16,
+                            width: '100%',
+                            shadowColor: '#000',
+                            shadowOpacity: 0.04,
+                            shadowRadius: 2,
+                            elevation: 1,
+                            }}
+                        >
+                            <View style={{
+                            borderWidth: 2,
+                            borderColor: theme.colors.primaryDark,
+                            borderRadius: 50,
+                            padding: 2,
+                            marginRight: 14,
+                            backgroundColor: 'white',
+                            }}>
+                            <Avatar
+                            uri={like.user.image}
+                            size={hp(5.5)}
+                            rounded={50}
+                            style={{}}
+                            />
+                            </View>
+                            <Text style={{
+                            fontSize: hp(2),
+                            color: theme.colors.textDark,
+                            fontWeight: 'bold',
+                            letterSpacing: 0.2,
+                            }}>
+                            {like.user.name}
+                            </Text>
+                        </View>
+                        ))}
+                        {item.postLikes.filter(like => like.user).length === 0 && (
+                        <Text style={{ color: theme.colors.textLight, textAlign: 'center', marginTop: 20 }}>
+                            Nadie ha dado like todavía.
+                        </Text>
+                        )}
+                    </ScrollView>
+                    <TouchableOpacity
+                        onPress={() => setShowLikesModal(false)}
+                        style={{
+                        marginTop: 10,
+                        backgroundColor: theme.colors.primaryDark,
+                        borderRadius: 100,
+                        paddingVertical: 10,
+                        paddingHorizontal: 38,
+                        alignSelf: 'center',
+                        shadowColor: theme.colors.primaryDark,
+                        shadowOpacity: 0.15,
+                        shadowRadius: 6,
+                        elevation: 2
+                        }}
+                    >
+                        <Text style={{
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: hp(2),
+                        letterSpacing: 0.5
+                        }}>
+                        Cerrar
+                        </Text>
+                    </TouchableOpacity>
+                    </View>
+                </View>
+                </Modal>
+            </View>
+
+            <Modal
+                visible={showImageModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowImageModal(false)}
+            >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.95)',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <TouchableOpacity style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }} onPress={() => setShowImageModal(false)}>
+                        <Image
+                            source={getSupabaseFileUrl(item?.file)}
+                            style={{ width: '95%', height: '80%', borderRadius: 16, resizeMode: 'contain' }}
+                        />
+                    </TouchableOpacity>
+                </View>
+            </Modal>
 
         </View>
     );
@@ -222,10 +390,13 @@ const styles = StyleSheet.create({
         shadowColor: '#000',
     },
     postMedia: {
-        height: hp(20),
         width: '100%',
+        aspectRatio: 1, // Cuadrada por defecto, pero puedes ajustar esto
         borderRadius: theme.radius.xxl,
         borderCurve: "continuous",
+        backgroundColor: '#eee', // Fondo gris claro para carga
+        marginTop: 8,
+        marginBottom: 8,
     },
     header: {
         flexDirection: 'row',  // Alinear elementos en fila

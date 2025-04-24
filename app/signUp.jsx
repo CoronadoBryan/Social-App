@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View, Image, Alert } from "react-native";
+import { Pressable, StyleSheet, Text, View, Image, Alert, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import React, { useRef, useState } from "react";
 import ScreenWrapper from "../components/ScreenWrapper";
 import { useRouter } from "expo-router";
@@ -58,58 +58,64 @@ const SignUp = () => {
   return (
     <ScreenWrapper bg="white">
       <StatusBar style="dark" />
-      <View style={styles.container}>
-        <BackButton />
-
-        {/* Imagen */}
-        <Image
-          source={require("../assets/images/signUp.png")} // Cambia esta ruta a la ubicación de tu imagen
-          style={styles.image}
-          resizeMode="contain"
-        />
-
-        {/* Welcome */}
-        <View>
-          <Text style={styles.welcomeText}>Hola,</Text>
-          <Text style={styles.welcomeText}>Únete a nosotros</Text>
-        </View>
-
-        {/* Formulario de registro */}
-        <View style={styles.form}>
-          <Text style={{ fontSize: hp(1.5), color: theme.colors.text }}>
-            Llena los campos para registrarte
-          </Text>
-          <Input
-            icon={<Icon name="user" size={24} strokeWidth={1.6} />}
-            placeholder="Tu nombre"
-            onChangeText={(value) => (nameRef.current = value)}
-          />
-          <Input
-            icon={<Icon name="mail" size={24} strokeWidth={1.6} />}
-            placeholder="Tu correo"
-            onChangeText={(value) => (emailRef.current = value)}
-          />
-          <Input
-            icon={<Icon name="lock" size={24} strokeWidth={1.6} />}
-            placeholder="Tu contraseña"
-            secureTextEntry
-            onChangeText={(value) => (passwordRef.current = value)}
-          />
-          
-          {/* Botón */}
-          <Button title={"Registrarse"} loading={loading} onPress={onSubmit} />
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>¿Ya tienes una cuenta?</Text>
-          <Pressable onPress={() => router.push("Login")}>
-            <Text style={[styles.footerText, { color: theme.colors.primaryDark, fontWeight: theme.fonts.semibold }]}>
-              Iniciar sesión
-            </Text>
-          </Pressable>
-        </View>
-      </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <BackButton />
+            {/* Imagen */}
+            <Image
+              source={require("../assets/images/signUp.png")}
+              style={styles.image}
+              resizeMode="contain"
+            />
+            {/* Welcome */}
+            <View>
+              <Text style={styles.welcomeText}>Hola,</Text>
+              <Text style={styles.welcomeText}>Únete a nosotros</Text>
+            </View>
+            {/* Formulario de registro */}
+            <View style={styles.form}>
+              <Text style={{ fontSize: hp(1.5), color: theme.colors.text }}>
+                Llena los campos para registrarte
+              </Text>
+              <Input
+                icon={<Icon name="user" size={24} strokeWidth={1.6} />}
+                placeholder="Tu nombre"
+                onChangeText={(value) => (nameRef.current = value)}
+              />
+              <Input
+                icon={<Icon name="mail" size={24} strokeWidth={1.6} />}
+                placeholder="Tu correo"
+                onChangeText={(value) => (emailRef.current = value)}
+              />
+              <Input
+                icon={<Icon name="lock" size={24} strokeWidth={1.6} />}
+                placeholder="Tu contraseña"
+                secureTextEntry
+                onChangeText={(value) => (passwordRef.current = value)}
+              />
+              {/* Botón */}
+              <Button title={"Registrarse"} loading={loading} onPress={onSubmit} />
+            </View>
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>¿Ya tienes una cuenta?</Text>
+              <Pressable onPress={() => router.push("Login")}>
+                <Text style={[styles.footerText, { color: theme.colors.primaryDark, fontWeight: theme.fonts.semibold }]}>
+                  Iniciar sesión
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenWrapper>
   );
 };
