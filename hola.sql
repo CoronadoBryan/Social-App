@@ -15,3 +15,5 @@ $$;
 create trigger createAuthUser
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+  t4p=g&##yLLAi4@

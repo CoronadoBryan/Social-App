@@ -33,6 +33,7 @@ const CommentsModal = ({ visible, onClose, postId, currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [input, setInput] = useState("");
+  const inputRef = React.useRef(null);
 
   const loadComments = async () => {
     setLoading(true);
@@ -42,8 +43,12 @@ const CommentsModal = ({ visible, onClose, postId, currentUser }) => {
   };
 
   useEffect(() => {
-    if (visible) loadComments();
-    else setInput("");
+    if (visible) {
+      loadComments();
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 350);
+    } else setInput("");
   }, [visible]);
 
   const handleSend = async () => {
@@ -53,6 +58,9 @@ const CommentsModal = ({ visible, onClose, postId, currentUser }) => {
     setInput("");
     await loadComments();
     setSending(false);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
   };
 
   return (
@@ -62,216 +70,198 @@ const CommentsModal = ({ visible, onClose, postId, currentUser }) => {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={{
-          flex: 1,
-          backgroundColor: "rgba(0,0,0,0.35)",
-          justifyContent: "center",
-          alignItems: "center"
-        }}>
-          <KeyboardAvoidingView
-            style={{ width: "100%", alignItems: "center" }}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-          >
-            <TouchableWithoutFeedback>
-              <View style={{
-                backgroundColor: "white",
-                borderRadius: 22,
-                paddingVertical: 18,
-                paddingHorizontal: 10,
-                width: "92%",
-                // Elimina maxHeight aquí para que el modal no se achique
-                shadowColor: "#000",
-                shadowOpacity: 0.13,
-                shadowRadius: 16,
-                elevation: 12,
-                position: "relative"
+      <View style={{
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.35)",
+        justifyContent: "center",
+        alignItems: "center"
+      }}>
+        <KeyboardAvoidingView
+          style={{ width: "100%", alignItems: "center" }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        >
+          <View style={{
+            backgroundColor: "#fff",
+            borderRadius: 14,
+            paddingVertical: 0,
+            paddingHorizontal: 0,
+            width: "96%",
+            // Altura dinámica según comentarios, mínimo 320, máximo 600
+            minHeight: 500,
+            maxHeight: Math.max(180, Math.min(80 + comments.length * 68, 600)),
+            shadowColor: "#000",
+            shadowOpacity: 0.08,
+            shadowRadius: 8,
+            elevation: 6,
+            position: "relative"
+          }}>
+            {/* Botón X minimalista */}
+            <TouchableOpacity
+              onPress={onClose}
+              activeOpacity={0.7}
+              style={{
+                position: "absolute",
+                top: 14,
+                width: 36,
+                right: 18,
+                zIndex: 10,
+                backgroundColor: "#f0f2f5",
+                borderRadius: 100,
+              }}
+              hitSlop={10}
+            >
+              <Text style={{
+                fontSize: 26,
+                color: "#888",
+                fontWeight: "400",
+                lineHeight: 26,
+                textAlign: "center",
               }}>
-                {/* Botón X */}
-                <TouchableOpacity
-                  onPress={onClose}
-                  style={{
-                    position: "absolute",
-                    top: 12,
-                    right: 14,
-                    zIndex: 10,
-                    padding: 6,
-                  }}
-                  hitSlop={10}
-                >
-                  <Text style={{ fontSize: 22, color: theme.colors.textLight, fontWeight: "bold" }}>×</Text>
-                </TouchableOpacity>
-                <Text style={{
-                  fontWeight: "bold",
-                  fontSize: hp(2.3),
-                  marginBottom: 10,
-                  color: theme.colors.primaryDark,
-                  textAlign: "center",
-                  letterSpacing: 0.2
-                }}>
-                  Comentarios
-                </Text>
-                <View style={{ maxHeight: 340 }}>
-                  <ScrollView
-                    contentContainerStyle={{ paddingBottom: 10 }}
-                    showsVerticalScrollIndicator={true}
-                  >
-                    {loading ? (
-                      <ActivityIndicator size="large" color={theme.colors.primaryDark} style={{ marginTop: 30 }} />
-                    ) : comments.length === 0 ? (
-                      <Text style={{ color: theme.colors.textLight, textAlign: "center", marginTop: 20 }}>
-                        Sé el primero en comentar.
-                      </Text>
-                    ) : (
-                      comments.map((c) => {
-                        const isMine = c.userId === currentUser.id;
-                        return (
-                          <View
-                            key={c.id}
-                            style={{
-                              flexDirection: "row",
-                              alignItems: "flex-end",
-                              justifyContent: isMine ? "flex-end" : "flex-start",
-                              marginBottom: 14,
-                              paddingHorizontal: 2,
-                            }}
-                          >
-                            {!isMine && (
-                              <Avatar
-                                uri={c.user?.image}
-                                size={hp(3.2)}
-                                rounded={hp(1.6)}
-                                style={{
-                                  marginRight: 8,
-                                  borderWidth: 1,
-                                  borderColor: "#eee",
-                                  backgroundColor: "#fff"
-                                }}
-                              />
-                            )}
-                            <View
-                              style={{
-                                maxWidth: "75%",
-                                backgroundColor: isMine ? "#E6F7FF" : "#F7F7F7",
-                                borderRadius: 16,
-                                padding: 10,
-                                marginLeft: isMine ? 40 : 0,
-                                marginRight: isMine ? 0 : 40,
-                                borderWidth: isMine ? 1 : 0,
-                                borderColor: isMine ? theme.colors.primaryDark : "#eee",
-                                shadowColor: "#000",
-                                shadowOpacity: 0.04,
-                                shadowRadius: 2,
-                                elevation: 1,
-                              }}
-                            >
-                              <View style={{ flexDirection: "row", justifyContent: isMine ? "flex-end" : "flex-start" }}>
-                                <Text
-                                  style={{
-                                    fontWeight: "bold",
-                                    color: theme.colors.textDark,
-                                    fontSize: hp(1.6),
-                                    textAlign: isMine ? "right" : "left",
-                                  }}
-                                >
-                                  {c.user?.name || "Usuario"}
-                                </Text>
-                                <Text style={{
-                                  color: theme.colors.textLight,
-                                  fontSize: hp(1.2),
-                                  marginLeft: 8,
-                                  alignSelf: "center"
-                                }}>
-                                  · {timeAgo(c.created_at)}
-                                </Text>
-                              </View>
-                              <Text
-                                style={{
-                                  color: theme.colors.text,
-                                  fontSize: hp(1.6),
-                                  marginTop: 2,
-                                  textAlign: isMine ? "right" : "left",
-                                }}
-                              >
-                                {c.text}
-                              </Text>
-                            </View>
-                            {isMine && (
-                              <Avatar
-                                uri={c.user?.image}
-                                size={hp(3.2)}
-                                rounded={hp(1.6)}
-                                style={{
-                                  marginLeft: 8,
-                                  borderWidth: 1,
-                                  borderColor: "#eee",
-                                  backgroundColor: "#fff"
-                                }}
-                              />
-                            )}
-                          </View>
-                        );
-                      })
-                    )}
-                  </ScrollView>
-                </View>
-                <View style={{
+                ×
+              </Text>
+            </TouchableOpacity>
+            <Text style={{
+              fontWeight: "600",
+              fontSize: hp(2.1),
+              marginTop: 20,
+              marginBottom: 6,
+              color: theme.colors.primaryDark,
+              textAlign: "center",
+              letterSpacing: 0.1
+            }}>
+              Comentarios
+            </Text>
+            <View style={{ flex: 1 }}>
+              <ScrollView
+                contentContainerStyle={{ paddingBottom: 8, paddingHorizontal: 0 }}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="always"
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color={theme.colors.primaryDark} style={{ marginTop: 20 }} />
+                ) : comments.length === 0 ? (
+                  <Text style={{ color: theme.colors.textLight, textAlign: "center", marginTop: 16, fontSize: hp(1.6) }}>
+                    Sé el primero en comentar.
+                  </Text>
+                ) : (
+                  comments.map((c) => (
+                    <View
+                      key={c.id}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "flex-start",
+                        paddingHorizontal: 12,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <Avatar
+                        uri={c.user?.image}
+                        size={hp(2.7)}
+                        rounded={hp(1.35)}
+                        style={{
+                          marginRight: 8,
+                          borderWidth: 0,
+                          backgroundColor: "#eee"
+                        }}
+                      />
+                      <View
+                        style={{
+                          flex: 1,
+                          backgroundColor: "#f0f2f5",
+                          borderRadius: 12,
+                          paddingVertical: 7,
+                          paddingHorizontal: 12,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontWeight: "500",
+                            color: theme.colors.textDark,
+                            fontSize: hp(1.5),
+                            marginBottom: 2,
+                          }}
+                        >
+                          {c.user?.name || "Usuario"}
+                        </Text>
+                        <Text
+                          style={{
+                            color: theme.colors.text,
+                            fontSize: hp(1.6),
+                          }}
+                        >
+                          {c.text}
+                        </Text>
+                        <Text style={{
+                          color: theme.colors.textLight,
+                          fontSize: hp(1.1),
+                          marginTop: 2,
+                        }}>
+                          {timeAgo(c.created_at)}
+                        </Text>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+            </View>
+            <View style={{
+              flexDirection: "row",
+              alignItems: "center",
+              borderTopWidth: 0.5,
+              borderTopColor: theme.colors.gray,
+              paddingTop: 6,
+              paddingBottom: 8,
+              paddingHorizontal: 10,
+              backgroundColor: "#fff"
+            }}>
+              <Avatar
+                uri={currentUser?.image}
+                size={hp(2.7)}
+                rounded={hp(1.35)}
+                style={{ marginRight: 8, backgroundColor: "#eee" }}
+              />
+              <TextInput
+                ref={inputRef}
+                value={input}
+                onChangeText={setInput}
+                placeholder="Escribe un comentario..."
+                style={{
+                  flex: 1,
+                  backgroundColor: "#f0f2f5",
+                  borderRadius: 16,
+                  paddingHorizontal: 14,
+                  paddingVertical: Platform.OS === "ios" ? 8 : 4,
+                  fontSize: hp(1.6),
+                  marginRight: 8,
+                  borderWidth: 0,
+                }}
+                editable={!sending}
+                returnKeyType="send"
+                onSubmitEditing={handleSend}
+                blurOnSubmit={false}
+              />
+              <TouchableOpacity
+                onPress={handleSend}
+                disabled={sending || !input.trim()}
+                style={{
+                  backgroundColor: theme.colors.primaryDark,
+                  borderRadius: 16,
+                  paddingVertical: 6,
+                  paddingHorizontal: 14,
+                  opacity: sending || !input.trim() ? 0.6 : 1,
                   flexDirection: "row",
-                  alignItems: "center",
-                  marginTop: 4,
-                  borderTopWidth: 0.5,
-                  borderTopColor: theme.colors.gray,
-                  paddingTop: 8,
-                }}>
-                  <Avatar
-                    uri={currentUser?.image}
-                    size={hp(3.2)}
-                    rounded={hp(1.6)}
-                    style={{ marginRight: 8, backgroundColor: "#fff" }}
-                  />
-                  <TextInput
-                    value={input}
-                    onChangeText={setInput}
-                    placeholder="Escribe un comentario bonito..."
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#F2F2F2",
-                      borderRadius: 20,
-                      paddingHorizontal: 14,
-                      paddingVertical: Platform.OS === "ios" ? 10 : 6,
-                      fontSize: hp(1.7),
-                      marginRight: 8,
-                      borderWidth: 1,
-                      borderColor: "#eee"
-                    }}
-                    editable={!sending}
-                    returnKeyType="send"
-                    onSubmitEditing={handleSend}
-                  />
-                  <TouchableOpacity
-                    onPress={handleSend}
-                    disabled={sending || !input.trim()}
-                    style={{
-                      backgroundColor: theme.colors.primaryDark,
-                      borderRadius: 20,
-                      paddingVertical: 8,
-                      paddingHorizontal: 16,
-                      opacity: sending || !input.trim() ? 0.6 : 1,
-                      flexDirection: "row",
-                      alignItems: "center"
-                    }}
-                  >
-                    <Text style={{ color: "white", fontWeight: "bold", fontSize: hp(1.7) }}>
-                      Enviar
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        </View>
-      </TouchableWithoutFeedback>
+                  alignItems: "center"
+                }}
+              >
+                <Text style={{ color: "white", fontWeight: "bold", fontSize: hp(1.5) }}>
+                  Enviar
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };

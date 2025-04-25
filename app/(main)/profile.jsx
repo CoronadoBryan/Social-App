@@ -1,5 +1,6 @@
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-import React from "react";
+import { Alert, Pressable, StyleSheet, Text, View , Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ScrollView, FlatList } from "react-native";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "expo-router";
@@ -9,10 +10,37 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { supabase } from "../../lib/supabase";
 import Avatar from "../../components/Avatar";
+import UserIcon from "../../assets/icons/User";
+import MailIcon from "../../assets/icons/Mail";
+
+import Description from "../../assets/icons/Description";
+import LocationIcon from "../../assets/icons/Location";
+import EditIcon from "../../assets/icons/Edit";
+import LockIcon from "../../assets/icons/Lock";
+import ArrowLeftIcon from "../../assets/icons/ArrowLeft";
+import LogoutIcon from "../../assets/icons/logout";
+import LanguageIcon from "../../assets/icons/ThreeDotsCircle"; // Usa el que prefieras
+import { fechPosts } from "../../services/postService";
+import PostCard from "../../components/PostCard"; // Asegúrate de importar esto
 
 const Profile = () => {
   const { user, setAuth } = useAuth();
   const router = useRouter();
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      setLoading(true);
+      const res = await fechPosts(20); // Puedes ajustar el límite
+      if (res.success) {
+        // Filtra solo los posts del usuario actual
+        setPosts(res.data.filter(p => p.userId === user.id));
+      }
+      setLoading(false);
+    };
+    loadPosts();
+  }, [user.id]);
 
   const onLogout = async () => {
     setAuth(null);
@@ -29,188 +57,201 @@ const Profile = () => {
     ]);
   };
 
+
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ScreenWrapper bg="#f7f7f7" noPaddingTop>
-        <UserHeader user={user} router={router} handleLogout={handleLogout} />
+        <UserHeader
+          user={user}
+          router={router}
+          handleLogout={handleLogout}
+          loading={loading}      // <-- agrega esto
+          posts={posts}          // <-- agrega esto
+        />
       </ScreenWrapper>
     </GestureHandlerRootView>
   );
 };
 
-const UserHeader = ({ user, router, handleLogout }) => {
-  return (
-    <View style={{ flex: 1 }}>
-      {/* Header decorativo */}
-      <View style={styles.headerBg}>
-        {/* Ejemplo de círculos decorativos */}
-        <View style={styles.circle1} />
-        <View style={styles.circle2} />
-        <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={{ fontSize: 22, color: "white" }}>←</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={{ fontSize: 20, color: theme.colors.rose }}>⎋</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.avatarWrapper}>
-          <Avatar
-            uri={user?.image}
-            size={hp(13)}
-            rounded={theme.radius.xxl}
-            style={styles.avatarShadow}
-          />
-          <Pressable style={styles.editIcon} onPress={() => router.push("editProfile")}>
-            <Text style={{ fontSize: 18, color: theme.colors.primaryDark }}>✎</Text>
-          </Pressable>
-        </View>
-        <Text style={styles.userName}>{user?.name}</Text>
-        {user?.bio && (
-          <Text style={styles.userBio}>{user.bio}</Text>
-        )}
-        {/* Estadísticas */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>Posts</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>Seguidores</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>Siguiendo</Text>
-          </View>
-        </View>
-      </View>
+const UserHeader = ({ user, router, handleLogout, loading, posts }) => (
+  <ScrollView style={{ flex: 1, backgroundColor: "#f7f7f7" }} contentContainerStyle={{ paddingBottom: 32 }}>
+    {/* Header minimalista */}
+    <View style={styles.headerMinimal}>
+      <Pressable
+        onPress={() => router.back()}
+        style={({ pressed }) => [
+          styles.iconButton,
+          pressed && styles.iconButtonPressed
+        ]}
+        android_ripple={{ color: "#16a08522", borderless: true }}
+      >
+        <ArrowLeftIcon width={26} height={26} color="#16a085" strokeWidth={2.5} />
+      </Pressable>
+      <Pressable
+        onPress={handleLogout}
+        style={({ pressed }) => [
+          styles.iconButton,
+          pressed && styles.iconButtonPressed
+        ]}
+        android_ripple={{ color: "#f8717122", borderless: true }}
+      >
+        <LogoutIcon width={24} height={24} color="#f87171" strokeWidth={2.2} />
+      </Pressable>
+    </View>
 
-      {/* Card de opciones */}
-      <View style={styles.optionsCard}>
-        <Text style={styles.sectionTitle}>Resumen de cuenta</Text>
-        <OptionItem emoji="👤" label="Mi Perfil" onPress={() => router.push("editProfile")} />
-        <OptionItem emoji="✉️" label={user?.email} disabled />
-        {user?.address && <OptionItem emoji="📍" label={user.address} disabled />}
-        {user?.phoneNumber && <OptionItem emoji="📱" label={user.phoneNumber} disabled />}
-
-        
-        {/* Puedes agregar más opciones aquí */}
-        <OptionItem emoji="🔒" label="Cambiar contraseña" onPress={() => {}} />
-        <OptionItem emoji="🌐" label="Idioma" onPress={() => {}} />
+    {/* Avatar */}
+    <View style={styles.avatarSection}>
+      <View style={{ position: "relative", alignItems: "center" }}>
+        <Avatar
+          uri={user?.image}
+          size={hp(13)}
+          rounded={theme.radius.xxl}
+          style={styles.avatarShadow}
+        />
+        <Pressable
+          style={styles.editIconOnAvatar}
+          onPress={() => router.push("editProfile")}
+        >
+          <EditIcon width={20} height={20} color="#16a085" strokeWidth={2} />
+        </Pressable>
       </View>
-      {/* Footer motivacional */}
-      <View style={styles.footerMsg}>
-        <Text style={{ color: theme.colors.textLight, fontSize: hp(1.7), textAlign: "center" }}>
-          ¡Gracias por ser parte de nuestra comunidad!
-        </Text>
+      <Text style={styles.userName}>{user?.name}</Text>
+    </View>
+
+    {/* Intereses como etiquetas */}
+    <View style={styles.interestsSection}>
+      <View style={styles.interestsRow}>
+        <View style={styles.chip}><Text style={styles.chipText}>React Native</Text></View>
+        <View style={styles.chip}><Text style={styles.chipText}>UI/UX</Text></View>
+        <View style={styles.chip}><Text style={styles.chipText}>Deportes</Text></View>
+        {/* Puedes mapear más intereses aquí */}
       </View>
     </View>
-  );
-};
 
-const OptionItem = ({ emoji, label, onPress, disabled }) => (
+    {/* Bio llamativa */}
+    <View style={styles.bioCard}>
+      <Text style={styles.bioTitle}>Presentación</Text>
+      <Text style={styles.bioText}>
+        {user?.bio || "¡Hola! Soy un usuario apasionado por la tecnología y el diseño. Me encanta compartir y aprender cosas nuevas cada día."}
+      </Text>
+      {user?.address && (
+        <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
+          <LocationIcon width={18} height={18} color="#16a085" strokeWidth={2} style={{ marginRight: 6 }} />
+          <Text style={{ color: "#16a085", fontSize: hp(1.7) }}>{user.address}</Text>
+        </View>
+      )}
+    </View>
+
+    {/* Estadísticas */}
+    <View style={styles.statsRow}>
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>0</Text>
+        <Text style={styles.statLabel}>Posts</Text>
+      </View>
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>0</Text>
+        <Text style={styles.statLabel}>Seguidores</Text>
+      </View>
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>0</Text>
+        <Text style={styles.statLabel}>Siguiendo</Text>
+      </View>
+    </View>
+
+    {/* Opciones rápidas */}
+    <View style={styles.optionsCard}>
+      <Text style={styles.sectionTitle}>Opciones rápidas</Text>
+      <OptionItem IconComponent={UserIcon} label="Mi Perfil" onPress={() => router.push("editProfile")} />
+      <OptionItem IconComponent={MailIcon} label={user?.email} disabled />
+      {user?.address && <OptionItem IconComponent={LocationIcon} label={user.address} disabled />}
+      {user?.bio && <OptionItem IconComponent={Description} label={user.bio} disabled />}
+      <OptionItem IconComponent={LockIcon} label="Cambiar contraseña" onPress={() => {}} />
+      <OptionItem IconComponent={LanguageIcon} label="Idioma" onPress={() => {}} />
+    </View>
+
+    {/* Botón crear publicación */}
+    <View style={{ alignItems: "center", marginTop: 24 }}>
+      <Pressable style={styles.ctaButton} onPress={() => router.push("newPost")}>
+        <Text style={styles.ctaText}>+ Crear publicación</Text>
+      </Pressable>
+    </View>
+
+    {/* Publicaciones */}
+    <View style={styles.postsSection}>
+      <Text style={styles.postsTitle}>Mis publicaciones</Text>
+      {loading ? (
+        <Text style={{ textAlign: "center", color: "#aaa" }}>Cargando...</Text>
+      ) : posts.filter(post => post.userId === user.id).length === 0 ? (
+        <Text style={{ textAlign: "center", color: "#aaa" }}>No tienes publicaciones aún.</Text>
+      ) : (
+        posts.filter(post => post.userId === user.id).map(post => (
+          <PostCard key={post.id} item={post} currentUser={user} router={router} />
+        ))
+      )}
+    </View>
+  </ScrollView>
+);
+
+const OptionItem = ({ IconComponent, label, onPress, disabled }) => (
   <TouchableOpacity
     onPress={onPress}
     disabled={disabled}
     style={[styles.optionRow, disabled && { opacity: 0.7 }]}
   >
-    <Text style={styles.optionEmoji}>{emoji}</Text>
+    <IconComponent width={24} height={24} color="#16a085" strokeWidth={2} style={{ marginRight: 10 }} />
     <Text style={styles.optionLabel}>{label}</Text>
     {!disabled && <Text style={{ color: theme.colors.textLight, fontSize: 18 }}>›</Text>}
   </TouchableOpacity>
 );
 
+// Cambia los estilos:
 const styles = StyleSheet.create({
-  headerBg: {
-    backgroundColor: theme.colors.primaryDark,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    paddingBottom: 28,
-    alignItems: "center",
-    paddingTop: 40,
-    position: "relative",
-    width: "100%",
-    overflow: "hidden",
-  },
-  circle1: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#1e293b22",
-    top: 10,
-    left: -40,
-  },
-  circle2: {
-    position: "absolute",
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: "#fff2",
-    top: 60,
-    right: -30,
-  },
-  headerRow: {
+  headerMinimal: {
     flexDirection: "row",
     alignItems: "center",
-    width: "100%",
     justifyContent: "space-between",
     paddingHorizontal: 18,
-    marginBottom: 0,
-    marginTop: 4,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 50,
-    backgroundColor: "rgba(0,0,0,0.08)",
-  },
-  logoutButton: {
-    padding: 8,
-    borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.10)",
-  },
-  avatarWrapper: {
-    marginTop: 8,
-    marginBottom: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-  avatarShadow: {
-    borderWidth: 3,
-    borderColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
+    paddingTop: 40,
+    paddingBottom: 16,
     shadowRadius: 8,
-    elevation: 8,
-    backgroundColor: "#fff",
+    // Elimina el borde feo:
+    // borderBottomWidth: 0.5,
+    // borderBottomColor: "#e5e7eb",
   },
-  editIcon: {
+  editIconOnAvatar: {
     position: "absolute",
     bottom: 8,
-    right: -8,
-    padding: 7,
-    borderRadius: 50,
-    backgroundColor: "white",
-    shadowColor: theme.colors.primaryDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    right: hp(2),
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 6,
+    shadowColor: "#16a085",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    zIndex: 2,
+  },
+  avatarSection: {
+    alignItems: "center",
+    marginTop: 18,
+    marginBottom: 8,
+  },
+  avatarShadow: {
+    borderWidth: 2,
+    borderColor: "#16a085",
+    backgroundColor: "#fff",
   },
   userName: {
     fontSize: hp(2.5),
     fontWeight: "bold",
-    color: "white",
-    marginTop: 8,
+    color: "#222",
+    marginTop: 10,
     textAlign: "center",
-    letterSpacing: 0.2,
   },
   userBio: {
-    color: "#e0e0e0",
-    fontSize: hp(1.7),
+    color: "#6b7280",
+    fontSize: hp(1.8),
     textAlign: "center",
     marginTop: 4,
     marginBottom: 2,
@@ -219,39 +260,47 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: 14,
+    marginTop: 10,
     marginBottom: 2,
     width: "100%",
     paddingHorizontal: 30,
   },
-  statBox: {
+  statCard: {
     alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    marginHorizontal: 6,
+    minWidth: 80,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   statNumber: {
     fontWeight: "bold",
-    fontSize: hp(2.1),
-    color: "white",
+    fontSize: hp(2.2),
+    color: "#16a085",
   },
   statLabel: {
     fontSize: hp(1.5),
-    color: "#e0e0e0",
+    color: "#6b7280",
   },
   optionsCard: {
-    backgroundColor: "white",
-    borderRadius: 24,
-    marginTop: -22,
-    marginHorizontal: 12,
-    paddingVertical: 18,
-    paddingHorizontal: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
+    backgroundColor: "#fff",
+    borderRadius: 22,
+    marginTop: 18,
+    marginHorizontal: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    shadowColor: "#16a085",
+    shadowOpacity: 0.04,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
   sectionTitle: {
     fontWeight: "bold",
-    fontSize: hp(2),
-    color: theme.colors.textDark,
+    fontSize: hp(2.1),
+    color: "#16a085",
     marginBottom: 10,
     marginLeft: 2,
   },
@@ -263,22 +312,107 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f0f0f0",
     paddingHorizontal: 2,
   },
-  optionEmoji: {
-    width: 36,
-    textAlign: "center",
-    fontSize: 20,
-    marginRight: 10,
-  },
   optionLabel: {
     flex: 1,
     fontSize: hp(2),
-    color: theme.colors.textDark,
+    color: "#222",
   },
   footerMsg: {
-    marginTop: 30,
-    marginBottom: 10,
+    marginTop: 28,
+    marginBottom: 16,
     alignItems: "center",
     justifyContent: "center",
+  },
+  ctaButton: {
+    backgroundColor: "#16a085",
+    borderRadius: 22,
+    paddingVertical: 12,
+    paddingHorizontal: 38,
+    marginBottom: 8,
+    shadowColor: "#16a085",
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  ctaText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: hp(2),
+    letterSpacing: 0.5,
+  },
+  bioCard: {
+    backgroundColor: "#e6f7f3",
+    borderRadius: 16,
+    marginHorizontal: 24,
+    marginTop: 12,
+    padding: 16,
+    alignItems: "center",
+  },
+  bioTitle: {
+    fontWeight: "bold",
+    fontSize: hp(2.1),
+    color: "#16a085",
+    marginBottom: 6,
+  },
+  bioText: {
+    fontSize: hp(1.9),
+    color: "#222",
+    textAlign: "center",
+  },
+  interestsSection: {
+    marginTop: 40,
+    marginBottom: 4,
+    marginHorizontal: 24,
+    alignItems: "flex-start", 
+  },
+  interestsTitle: {
+    fontWeight: "bold",
+    fontSize: hp(2),
+    color: "#16a085",
+    marginBottom: 4,
+    marginLeft: 2,
+  },
+  interestsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 0,
+  },
+  chip: {
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    marginRight: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#16a08533",
+  },
+  chipText: {
+    color: "#16a085",
+    fontWeight: "500",
+    fontSize: hp(1.7),
+  },
+  postsSection: {
+    marginTop: 24,
+    marginHorizontal: 16,
+  },
+  postsTitle: {
+    fontWeight: "bold",
+    fontSize: hp(2.1),
+    color: "#16a085",
+    marginBottom: 10,
+  },
+  postCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  postText: {
+    color: "#6b7280",
+    fontSize: hp(1.8),
   },
 });
 

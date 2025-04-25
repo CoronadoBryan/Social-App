@@ -1,8 +1,7 @@
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-import React from "react";
+import { Pressable, StyleSheet, Text, View, Alert } from "react-native";
+import React, { useRef, useState } from "react";
 import ScreenWrapper from "../components/ScreenWrapper";
 import { useRouter } from "expo-router";
-import BackButton from "../components/BackButton";
 import { StatusBar } from "expo-status-bar";
 import { hp, wp } from "../helpers/common";
 import { theme } from "../constants/theme";
@@ -10,7 +9,6 @@ import Input from "../components/Input";
 import Icon from "../assets/icons";
 import Button from "../components/Button";
 import { supabase } from "../lib/supabase";
-import { useRef, useState } from "react";
 
 const Login = () => {
   const router = useRouter();
@@ -18,75 +16,69 @@ const Login = () => {
   const passwordRef = useRef("");
   const [loading, setLoading] = useState(false);
 
-  const onSubmit= async () => {
-    if(!emailRef.current || !passwordRef.current){
-      alert("Por favor llene todos los campos")
+  const onSubmit = async () => {
+    if (!emailRef.current || !passwordRef.current) {
+      alert("Por favor, completa todos los campos");
       return;
     }
 
     let email = emailRef.current.trim();
     let password = passwordRef.current.trim();
     setLoading(true);
-    const {error} = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
     });
 
     setLoading(false);
 
-    console.log('error', error);
-    if(error){
-      Alert.alert("Login", error.message);
+    if (error) {
+      Alert.alert("Inicio de sesión", error.message);
     }
+  };
 
-  }
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper>
       <StatusBar style="dark" />
+      {/* Fondo minimalista con círculos */}
+      <View style={styles.bgDecor}>
+        <View style={styles.circle1} />
+        <View style={styles.circle2} />
+        <View style={styles.circle3} />
+      </View>
       <View style={styles.container}>
-        <BackButton />
-
-        {/* welcome */}
-        <View>
-          <Text style={styles.welcomeText}>Hola,</Text>
-          <Text style={styles.welcomeText}>Welcome Back</Text>
+        {/* Encabezado moderno */}
+        <View style={styles.header}>
+          <Text style={styles.title}>¡Bienvenido de nuevo!</Text>
+          <Text style={styles.subtitle}>
+            Ingresa tus datos para acceder a la comunidad.
+          </Text>
         </View>
 
         {/* Formulario de login */}
-
         <View style={styles.form}>
-          <Text style={{ fontSize: hp(1.5), color: theme.colors.text }}>
-            logueate pata continuar
-          </Text>
           <Input
-            icon={<Icon name="mail" size={24} strokeWidth={1.6} />}
-            placeholder="tu correo"
-            onChangeText={(value=> emailRef.current = value)}
+            icon={<Icon name="mail" size={22} strokeWidth={1.6} />}
+            placeholder="Correo electrónico"
+            onChangeText={(value) => (emailRef.current = value)}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
           <Input
-            icon={<Icon name="lock" size={24} strokeWidth={1.6} />}
-            placeholder="tu contraseña"
+            icon={<Icon name="lock" size={22} strokeWidth={1.6} />}
+            placeholder="Contraseña"
             secureTextEntry
-            onChangeText={(value=> passwordRef.current = value)}
+            onChangeText={(value) => (passwordRef.current = value)}
           />
-          <Text style={styles.forgoPassword}>
-            ¿Olvidaste tu contraseña?
-          </Text>
-          {/* boton */}
-
-          <Button title={"Login"} loading={loading} onPress={onSubmit} />
+          <Button title={"Iniciar Sesión"} loading={loading} onPress={onSubmit} />
         </View>
 
         {/* footer */}
-
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            ¿No tienes una cuenta?
-          </Text>
-          <Pressable onPress={()=> router.push("signUp")}>
-            <Text style={[styles.footerText , {color: theme.colors.primaryDark , fontWeight: theme.fonts.semibold}]} >Sing Up</Text>
+          <Text style={styles.footerText}>¿No tienes una cuenta?</Text>
+          <Pressable onPress={() => router.push("signUp")}>
+            <Text style={styles.footerLink}>Regístrate</Text>
           </Pressable>
-
         </View>
       </View>
     </ScreenWrapper>
@@ -96,29 +88,84 @@ const Login = () => {
 export default Login;
 
 const styles = StyleSheet.create({
+  bgDecor: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  circle1: {
+    position: "absolute",
+    top: -hp(10),
+    left: -wp(20),
+    width: wp(70),
+    height: wp(70),
+    borderRadius: wp(35),
+    backgroundColor: theme.colors.primary + "22",
+  },
+  circle2: {
+    position: "absolute",
+    bottom: -hp(10),
+    right: -wp(25),
+    width: wp(60),
+    height: wp(60),
+    borderRadius: wp(30),
+    backgroundColor: theme.colors.primaryDark + "18",
+  },
+  circle3: {
+    position: "absolute",
+    top: hp(30),
+    right: -wp(10),
+    width: wp(30),
+    height: wp(30),
+    borderRadius: wp(15),
+    backgroundColor: theme.colors.primary + "10",
+  },
   container: {
     flex: 1,
-    gap: 15,
-    paddingHorizontal: wp(5),
+    justifyContent: "center",
+    paddingHorizontal: wp(7),
+    backgroundColor: "transparent",
+    zIndex: 1,
   },
-  welcomeText: {
-    fontSize: hp(4),
-    fontWeight: theme.fonts.bold,
-    color: theme.colors.text,
+  header: {
+    marginBottom: hp(4),
+    alignItems: "center",
+  },
+  title: {
+    fontSize: hp(3.5),
+    fontWeight: "bold",
+    color: theme.colors.primary,
+    marginBottom: hp(0.7),
+    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: hp(1.8),
+    color: theme.colors.textSecondary,
+    textAlign: "center",
+    marginHorizontal: wp(2),
+    fontWeight: "500",
   },
   form: {
-    gap: 25,
+    gap: 18,
+    marginBottom: hp(4),
   },
-
-  forgoPassword: {
-    fontWeight: theme.fonts.semibold,
-    textAlign: "right",
-    color: theme.colors.text,
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: hp(2),
+    gap: 6,
   },
-
-  footerText:{
-    textAlign: "center",
-    color: theme.colors.text,
-    fontSize: hp(1.6),
-  }
+  footerText: {
+    color: theme.colors.textSecondary,
+    fontSize: hp(1.7),
+  },
+  footerLink: {
+    color: theme.colors.primaryDark,
+    fontWeight: "bold",
+    fontSize: hp(1.7),
+    marginLeft: 4,
+    textDecorationLine: "underline",
+  },
 });

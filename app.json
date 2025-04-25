@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "TejiJuntos",
-    "slug": "TejiJuntos",
+    "name": "Catwise", 
+    "slug": "catwise", 
     "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "orientation": "portrait", 
+    "icon": "./assets/images/icono-logo.png",
+    "scheme": "catwise",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+    "splash": { 
+      "image": "./assets/images/splash.png", 
+      "resizeMode": "contain", 
+      "backgroundColor": "black" 
     },
     "ios": {
       "supportsTablet": true
@@ -19,18 +19,28 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.bryancito.catwise"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icono-logo.png"
     },
     "plugins": [
       "expo-router"
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true 
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "7c3e8f83-b3c5-409e-8ec6-76b232ab12b6"
+      }
     }
+  
   }
 }

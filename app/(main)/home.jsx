@@ -97,7 +97,7 @@ const Home = () => {
       <View style={styles.container}>
         {/* header */}
         <View style={styles.header}>
-          <Text style={styles.title}>MiauCode</Text>
+          <Text style={styles.appName}>CATWISE</Text>
           <View style={styles.icons}>
             <Pressable onPress={() => router.push("notifications")}>
               <Icon
@@ -116,7 +116,6 @@ const Home = () => {
               />
             </Pressable>
             <Pressable onPress={() => router.push("profile")}>
-              {/* <Icon name = "user" size={hp(3.2)} strokeWith={2} color={theme.colors.text} /> */}
               <Avatar
                 uri={user?.image}
                 size={hp(4.3)}
@@ -172,10 +171,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: wp(4),
   },
-  title: {
-    color: theme.colors.text,
-    fontSize: hp(3.2),
-    fontWeight: theme.fonts.bold,
+  appName: {
+    color: theme.colors.primaryDark,
+    fontSize: hp(3.6),
+    fontWeight: "700", // Semi-bold, similar a Facebook
+    letterSpacing: 1,
+    fontFamily: "System", // Usa la fuente del sistema, similar a Facebook
+    textTransform: "uppercase",
+    fontStyle: "italic", // Hace el texto un poco inclinado
   },
   avatarImage: {
     width: hp(4.3),
