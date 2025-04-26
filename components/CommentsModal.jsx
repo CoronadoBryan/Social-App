@@ -15,6 +15,7 @@ import { fetchComments, createComment } from "../services/commentService";
 import Avatar from "./Avatar";
 import { hp } from "../helpers/common";
 import { theme } from "../constants/theme";
+import { useRouter } from "expo-router";
 
 const timeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -34,6 +35,7 @@ const CommentsModal = ({ visible, onClose, postId, currentUser }) => {
   const [sending, setSending] = useState(false);
   const [input, setInput] = useState("");
   const inputRef = React.useRef(null);
+  const router = useRouter();
 
   const loadComments = async () => {
     setLoading(true);
@@ -152,42 +154,52 @@ const CommentsModal = ({ visible, onClose, postId, currentUser }) => {
                         flexDirection: "row",
                         alignItems: "flex-start",
                         paddingHorizontal: 12,
-                        marginBottom: 10,
+                        marginBottom: 14, // más espacio
                       }}
                     >
-                      <Avatar
-                        uri={c.user?.image}
-                        size={hp(2.7)}
-                        rounded={hp(1.35)}
-                        style={{
-                          marginRight: 8,
-                          borderWidth: 0,
-                          backgroundColor: "#eee"
-                        }}
-                      />
+                      <TouchableOpacity
+                        onPress={() => router.push({ pathname: "/user/[id]", params: { id: c.userId } })}
+                        activeOpacity={0.7}
+                        style={{ marginRight: 10 }}
+                      >
+                        <Avatar
+                          uri={c.user?.image}
+                          size={hp(4.2)} // más grande
+                          rounded={hp(2.1)}
+                          style={{
+                            borderWidth: 0,
+                            backgroundColor: "#eee"
+                          }}
+                        />
+                      </TouchableOpacity>
                       <View
                         style={{
                           flex: 1,
                           backgroundColor: "#f0f2f5",
                           borderRadius: 12,
-                          paddingVertical: 7,
-                          paddingHorizontal: 12,
+                          paddingVertical: 9,
+                          paddingHorizontal: 14,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontWeight: "500",
-                            color: theme.colors.textDark,
-                            fontSize: hp(1.5),
-                            marginBottom: 2,
-                          }}
+                        <TouchableOpacity
+                          onPress={() => router.push({ pathname: "/user/[id]", params: { id: c.userId } })}
+                          activeOpacity={0.7}
                         >
-                          {c.user?.name || "Usuario"}
-                        </Text>
+                          <Text
+                            style={{
+                              fontWeight: "500",
+                              color: theme.colors.textDark,
+                              fontSize: hp(1.7), // más grande
+                              marginBottom: 2,
+                            }}
+                          >
+                            {c.user?.name || "Usuario"}
+                          </Text>
+                        </TouchableOpacity>
                         <Text
                           style={{
                             color: theme.colors.text,
-                            fontSize: hp(1.6),
+                            fontSize: hp(1.7),
                           }}
                         >
                           {c.text}

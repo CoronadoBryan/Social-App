@@ -15,32 +15,26 @@ import { createPostLike, removePostLike } from '../services/postService';
 import { Share } from 'react-native';
 import CommentsModal from './CommentsModal'; // crea este componente
 import { fetchComments } from '../services/commentService'; // Asegúrate de importar esto
+import { useRouter } from "expo-router";
 
 /// Configurar moment para usar español
 moment.locale('es');
 
 
 const textStyles = {
-    div:{
-        color: theme.colors.dark,
-        fontSize: hp(1.7),
-    }
-
+    color: theme.colors.dark,
+    fontSize: hp(1.7),
 };
 
 const tagsStyles = {
-    div: textStyles,
     p: textStyles,
     ol: textStyles,
     h1: {
         color: theme.colors.dark,
-        
     },
     h4: {
         color: theme.colors.dark,
-        
     }
-
 }
 // El item viene de la data que se le pasa al componente 
 const PostCard = ({
@@ -133,7 +127,11 @@ const PostCard = ({
     return (
         <View style={[styles.container, hasShadow && shadowStyles]}>
             <View style={styles.header}>
-                <View style={styles.userDetails}>
+                <TouchableOpacity
+                    style={styles.userDetails}
+                    onPress={() => router.push({ pathname: "/user/[id]", params: { id: item.userId } })}
+                    activeOpacity={0.7}
+                >
                     <Avatar 
                         size={hp(4.5)}
                         uri={item?.user?.image}
@@ -143,7 +141,7 @@ const PostCard = ({
                         <Text style={styles.username}>{item?.user?.name}</Text>
                         <Text style={styles.postTime}>{created_at}</Text>
                     </View>
-                </View>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={openPostDetails} >
                     <Icon name="threeDotsHorizontal" size={hp(3.4)} strokeWidth={3} color={theme.colors.text} />
                 </TouchableOpacity>
@@ -388,25 +386,35 @@ const PostCard = ({
                     elevation: 1,
                     }}
                 >
-                    <Avatar
-                    uri={c.user?.image}
-                    size={hp(2.7)}
-                    rounded={hp(1.2)}
-                    style={{ marginRight: 8, borderWidth: 1, borderColor: "#eee", backgroundColor: "#fff" }}
-                    />
+                    <TouchableOpacity
+                      onPress={() => router.push({ pathname: "/user/[id]", params: { id: c.userId } })}
+                      activeOpacity={0.7}
+                    >
+                      <Avatar
+                        uri={c.user?.image}
+                        size={hp(3.7)} // más grande
+                        rounded={hp(1.7)}
+                        style={{ marginRight: 8, borderWidth: 1, borderColor: "#eee", backgroundColor: "#fff" }}
+                      />
+                    </TouchableOpacity>
                     <View style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: "bold", color: theme.colors.textDark, fontSize: hp(1.6) }}>
-                        {c.user?.name || "Usuario"}
-                        <Text style={{ color: theme.colors.textLight, fontWeight: "normal", fontSize: hp(1.2) }}>
-                        {"  · "}{moment(c.created_at).fromNow()}
+                      <TouchableOpacity
+                        onPress={() => router.push({ pathname: "/user/[id]", params: { id: c.userId } })}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={{ fontWeight: "bold", color: theme.colors.textDark, fontSize: hp(1.7) }}>
+                          {c.user?.name || "Usuario"}
+                          <Text style={{ color: theme.colors.textLight, fontWeight: "normal", fontSize: hp(1.2) }}>
+                            {"  · "}{moment(c.created_at).fromNow()}
+                          </Text>
                         </Text>
-                    </Text>
-                    <Text style={{ color: theme.colors.text, fontSize: hp(1.6), marginTop: 1 }}>
+                      </TouchableOpacity>
+                      <Text style={{ color: theme.colors.text, fontSize: hp(1.6), marginTop: 1 }}>
                         {c.text}
-                    </Text>
+                      </Text>
                     </View>
                 </View>
-                ))}
+            ))}
 
             <Modal
                 visible={showImageModal}
@@ -434,6 +442,7 @@ const PostCard = ({
                 onClose={() => setShowComments(false)}
                 postId={item.id}
                 currentUser={currentUser}
+                router={router}
             />
 
         </View>

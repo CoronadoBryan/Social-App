@@ -1,46 +1,46 @@
 {
   "expo": {
-    "name": "Catwise", 
-    "slug": "catwise", 
+    "name": "Catwise",
+    "slug": "catwise",
     "version": "1.0.0",
-    "orientation": "portrait", 
-    "icon": "./assets/images/icono-logo.png",
+    "orientation": "portrait",
+    "icon": "./assets/images/icono.png",
     "scheme": "catwise",
     "userInterfaceStyle": "automatic",
-    "splash": { 
-      "image": "./assets/images/splash.png", 
-      "resizeMode": "contain", 
-      "backgroundColor": "black" 
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/icono.png",
+        "backgroundColor": "#000000"
       },
       "package": "com.bryancito.catwise"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/icono-logo.png"
+      "favicon": "./assets/images/icono.png"
     },
     "plugins": [
       "expo-router"
     ],
     "experiments": {
-      "typedRoutes": true 
+      "typedRoutes": true
     },
     "extra": {
       "router": {
         "origin": false
       },
       "eas": {
-        "projectId": "7c3e8f83-b3c5-409e-8ec6-76b232ab12b6"
+        "projectId": "c1841740-60de-4406-8da0-b921023cdf89"
       }
-    }
-  
+    },
+    "owner": "bryancito"
   }
 }

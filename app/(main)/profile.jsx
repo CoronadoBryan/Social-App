@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ScrollView, FlatList } from "react-native";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { useAuth } from "../../contexts/AuthContext";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { wp, hp } from "../../helpers/common";
 import { theme } from "../../constants/theme";
 import { TouchableOpacity } from "react-native-gesture-handler";
@@ -22,12 +22,19 @@ import LogoutIcon from "../../assets/icons/logout";
 import LanguageIcon from "../../assets/icons/ThreeDotsCircle"; // Usa el que prefieras
 import { fechPosts } from "../../services/postService";
 import PostCard from "../../components/PostCard"; // Asegúrate de importar esto
+import { fetchInterests } from "../../services/interestService";
 
 const Profile = () => {
   const { user, setAuth } = useAuth();
+  if (!user) return null;
+
   const router = useRouter();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userInterests, setUserInterests] = useState([]);
+  const params = useLocalSearchParams();
+
+
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -42,12 +49,33 @@ const Profile = () => {
     loadPosts();
   }, [user.id]);
 
+
+  useEffect(() => {
+    // Esto se ejecuta cada vez que cambian los params (incluido refresh)
+    if (user?.id) {
+      const loadUserInterests = async () => {
+        const { data: userInterestRows } = await supabase
+          .from("userInterests")
+          .select("interestsId")
+          .eq("userId", user.id);
+
+        const interestIds = userInterestRows?.map(i => Number(i.interestsId)) || [];
+        const allInterests = await fetchInterests();
+
+        const filtered = allInterests.filter(i => interestIds.includes(Number(i.id)));
+        setUserInterests(filtered);
+      };
+      loadUserInterests();
+    }
+  }, [user?.id, params.refresh]);
+
   const onLogout = async () => {
     setAuth(null);
     const { error } = await supabase.auth.signOut();
     if (error) {
       Alert.alert("Cerrar sesión", error.message);
     }
+    // No navegues aquí
   };
 
   const handleLogout = async () => {
@@ -66,20 +94,27 @@ const Profile = () => {
           user={user}
           router={router}
           handleLogout={handleLogout}
-          loading={loading}      // <-- agrega esto
-          posts={posts}          // <-- agrega esto
+          loading={loading}
+          posts={posts}
+          userInterests={userInterests} // <-- agrega esto
         />
       </ScreenWrapper>
     </GestureHandlerRootView>
   );
 };
 
-const UserHeader = ({ user, router, handleLogout, loading, posts }) => (
+const UserHeader = ({ user, router, handleLogout, loading, posts, userInterests }) => (
   <ScrollView style={{ flex: 1, backgroundColor: "#f7f7f7" }} contentContainerStyle={{ paddingBottom: 32 }}>
     {/* Header minimalista */}
     <View style={styles.headerMinimal}>
       <Pressable
-        onPress={() => router.back()}
+        onPress={() => {
+          if (router.canGoBack?.()) {
+            router.back();
+          } else {
+            router.replace("/home");
+          }
+        }}
         style={({ pressed }) => [
           styles.iconButton,
           pressed && styles.iconButtonPressed
@@ -122,10 +157,15 @@ const UserHeader = ({ user, router, handleLogout, loading, posts }) => (
     {/* Intereses como etiquetas */}
     <View style={styles.interestsSection}>
       <View style={styles.interestsRow}>
-        <View style={styles.chip}><Text style={styles.chipText}>React Native</Text></View>
-        <View style={styles.chip}><Text style={styles.chipText}>UI/UX</Text></View>
-        <View style={styles.chip}><Text style={styles.chipText}>Deportes</Text></View>
-        {/* Puedes mapear más intereses aquí */}
+        {userInterests.length > 0 ? (
+          userInterests.map((item) => (
+            <View key={item.id} style={styles.chip}>
+              <Text style={styles.chipText}>{item.name}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={{ color: "#aaa", fontSize: hp(1.7) }}>Sin intereses</Text>
+        )}
       </View>
     </View>
 

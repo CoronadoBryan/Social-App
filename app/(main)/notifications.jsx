@@ -4,7 +4,7 @@ import React from 'react'
 const Notifications = () => {
   return (
     <View>
-      <Text>Notifications</Text>
+      <Text>Aun esta en proceso </Text>
     </View>
   )
 }

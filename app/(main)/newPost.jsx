@@ -103,11 +103,10 @@ const NewPost = () => {
     if(res.success){
       bodyRef.current = "";
       editorRef.current?.setContentHTML("");
-      router.back();
-      
-  }else{
-    Alert.alert("error no se pudo publicar", res.msg);
-  }
+      router.replace("/home");
+    } else {
+      Alert.alert("error no se pudo publicar", res.msg);
+    }
   };
   return (
     <ScreenWrapper bg="white">

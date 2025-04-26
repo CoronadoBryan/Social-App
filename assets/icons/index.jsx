@@ -16,12 +16,16 @@ import ArrowLeft from './ArrowLeft';
 import ThreeDotsCircle from './ThreeDotsCircle';
 import ThreeDotsHorizontal from './ThreeDotsHorizontal';
 import Comment from './Comment';
+import Comunidad from './Comunidad';
 import Share from './Share';
 import Send from './Send';
 import Delete from './Delete';
+import Explorar from './Explorar';
 import Logout from './logout';
 import Image from './Image';
 import Video from './Video';
+import Github from './Github';
+import DonarYape from './DonarYape';
 
 const icons = {
     home: Home,
@@ -45,6 +49,11 @@ const icons = {
     logout: Logout,
     image: Image,
     video: Video,
+    github:Github,
+    comunidad: Comunidad,
+    explorar: Explorar,
+    donarYape: DonarYape,
+
 }
 
 const Icon = ({name, ...props}) => {

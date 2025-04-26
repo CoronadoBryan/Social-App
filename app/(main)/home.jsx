@@ -1,7 +1,6 @@
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, StyleSheet, Text, View } from "react-native";
 import React, { useEffect } from "react";
 import ScreenWrapper from "../../components/ScreenWrapper";
-import { Button } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
 import { getUserData, user } from "../../services/userService";
 import { supabase } from "../../lib/supabase";
@@ -16,8 +15,8 @@ import { fechPosts } from "../../services/postService";
 import { FlatList } from "react-native";
 import PostCard from "../../components/PostCard";
 import Loading from "../../components/Loading";
-
-var limit = 0;
+import BottomNavbar from "../../components/BottomNavbar";
+import MenuModal from "../../components/MenuModal"; // importa tu modal
 
 const Home = () => {
   const { user, setAuth } = useAuth();
@@ -26,6 +25,8 @@ const Home = () => {
   const [posts, setPosts] = useState([]);
   const [hasMore, setHasMore] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [limit, setLimit] = useState(4);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const handlePostEvent = async (payload) => {
     console.log("post event", payload);
@@ -47,51 +48,50 @@ const Home = () => {
       )
       .subscribe();
 
-     getPosts(); // Llama a la función de carga inicial de posts
+    getPosts(); // Llama a la función de carga inicial de posts
 
     return () => {
       supabase.removeChannel(postChannel); // Elimina el canal al desmontar el componente
     };
   }, []);
 
-  const getPosts = async () => {
-    if (!hasMore) return null;
-    limit = limit + 4;
-    console.log("got post result", limit);
-    let res = await fechPosts(limit);
+  const getPosts = async (reset = false) => {
+    let newLimit = reset ? 4 : limit + 4;
+    let res = await fechPosts(newLimit);
     if (res.success) {
-      // Si ya tienes todos los posts, detén la carga
-      if (posts.length == res.data.length) setHasMore(false);
-
-      // Acumula los posts, evitando duplicados
-      setPosts((prev) => {
-        const ids = new Set(prev.map((p) => p.id));
-        const nuevos = res.data.filter((p) => !ids.has(p.id));
-        return [...prev, ...nuevos];
-      });
+      if (reset) {
+        setPosts(res.data);
+        setHasMore(true);
+        setLimit(4);
+      } else {
+        // Si ya tienes todos los posts, detén la carga
+        if (posts.length === res.data.length) setHasMore(false);
+        setPosts(res.data);
+        setLimit(newLimit);
+      }
     }
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    limit = 4; // Reinicia el límite para refrescar desde el inicio
-    let res = await fechPosts(limit);
-    if (res.success) {
-      setPosts(res.data); // Reemplaza los posts por los más recientes
-      setHasMore(true);
-    }
+    await getPosts(true); // true para resetear
     setRefreshing(false);
   };
 
-  // console.log('user:' , user);
+  const handleMenuAction = (action) => {
+    if (action === "perfil") {
+      // Abrir WhatsApp con mensaje
+      const phone = "51901064562"; // Código de país + número (sin +)
+      const text = "Hola quisiera colaborar en la App de Catwise";
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+      Linking.openURL(url);
+    } else if (action === "favoritos") {
+      router.push("/DonarYapeScreen"); // Ajusta la ruta según tu estructura
+    }
+    // ...otros casos
+    setMenuVisible(false);
+  };
 
-  // const onLogout = async () => {
-  //   setAuth(null);
-  //   const { error } = await supabase.auth.signOut();
-  //   if (error) {
-  //     Alert.alert("cerrar sesion", error.message);
-  //   }
-  // };
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>
@@ -103,21 +103,21 @@ const Home = () => {
               <Icon
                 name="heart"
                 size={hp(3.2)}
-                strokeWith={2}
+                strokeWidth={2}
                 color={theme.colors.text}
               />
             </Pressable>
             <Pressable onPress={() => router.push("newPost")}>
-              <Icon
+            <Icon
                 name="plus"
                 size={hp(3.2)}
-                strokeWith={2}
+                strokeWidth={2}
                 color={theme.colors.text}
               />
             </Pressable>
             <Pressable onPress={() => router.push("profile")}>
               <Avatar
-                uri={user?.image}
+                uri={user?.image || ""}
                 size={hp(4.3)}
                 rounded={theme.radius.sm}
                 style={{ borderWidth: 2 }}
@@ -154,6 +154,13 @@ const Home = () => {
           onRefresh={onRefresh}
         />
       </View>
+      <BottomNavbar current="home" onMenuPress={() => setMenuVisible(true)} />
+
+      <MenuModal
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onAction={handleMenuAction}
+      />
     </ScreenWrapper>
   );
 };

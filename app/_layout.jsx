@@ -1,3 +1,6 @@
+// Este componente es el "jefe" de la app. Aquí se decide si el usuario puede entrar o no.
+
+// Importa lo necesario para mostrar pantallas y manejar la sesión
 import { View, Text, LogBox } from "react-native";
 import React, { useEffect } from "react";
 import { router, Stack } from "expo-router";
@@ -6,46 +9,74 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { getUserData } from "../services/userService";
 
+// Oculta mensajes molestos en la consola
 LogBox.ignoreLogs([
   "Warning. TNodeChildrenRenderer",
   "Warning: MemoizedTNodeRenderer",
   "Warning: TRendeEngineProvider",
-  "Warning: TNodeChildrenRenderer"
-  
-
+  "Warning: TNodeChildrenRenderer",
+  "Support for defaultProps will be removed from function components",
+  "Warning: TNodeChildrenRenderer: Support for defaultProps will be removed from function components",
+  "Warning: MemoizedTNodeRenderer: Support for defaultProps will be removed from memo components",
 ]);
 
+// Este componente envuelve toda la app y le da acceso a la información de si el usuario está logueado o no
 const _layout = () => {
   return (
+    // Aquí le damos a toda la app la información de si el usuario está logueado o no
     <AuthProvider>
       <MainLayout />
     </AuthProvider>
   );
 };
 
+// Aquí se decide a qué pantalla va el usuario según si está logueado o no
 const MainLayout = () => {
   const { setAuth, setUserData } = useAuth();
 
+  // Log de sesión cada vez que cambia
   useEffect(() => {
-    supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("session user :", session?.user.id);
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (data?.session) {
+        console.log("✅ Sesión activa:", data.session.user.email);
+      } else {
+        console.log("❌ Sesión cerrada");
+      }
+      if (error) {
+        console.log("Error al obtener sesión:", error);
+      }
+    };
+    checkSession();
+  });
 
+  useEffect(() => {
+    // Aquí escuchamos si el usuario inicia o cierra sesión
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
+        // Si el usuario está logueado, guardamos su info y lo mandamos al home
         setAuth(session?.user);
         updateUserData(session.user, session?.user?.email);
-        router.replace("/home");
+        router.push("/home"); // <-- Cambiado a push
       } else {
+        // Si el usuario no está logueado, lo mandamos a la pantalla de bienvenida
         setAuth(null);
-        router.replace("/welcome");
+        router.push("/welcome"); // <-- Cambiado a push
       }
     });
-  }, []); //sirve para que solo se ejecute una vez
+    // Cuando esta pantalla ya no se usa, dejamos de escuchar para ahorrar recursos
+    return () => {
+      listener?.subscription?.unsubscribe?.();
+    };
+  }, []); // Esto solo se hace una vez cuando inicia la app
 
+  // Esta función busca más información del usuario y la guarda para que la use la app
   const updateUserData = async (user, email) => {
     let res = await getUserData(user?.id);
     if (res.success) setUserData({ ...res.data, email });
   };
 
+  // Aquí se muestran las pantallas de la app, sin el encabezado arriba
   return (
     <Stack
       screenOptions={{
