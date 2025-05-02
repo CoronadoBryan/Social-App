@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "992679294530",
+    "project_id": "catwise-e5b1e",
+    "storage_bucket": "catwise-e5b1e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:992679294530:android:d0b0daa7d6f6fa54035fdb",
+        "android_client_info": {
+          "package_name": "com.bryancito.catwise"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATFSh3SukAKaJzJWu7BmIAXQweg6UkU-8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

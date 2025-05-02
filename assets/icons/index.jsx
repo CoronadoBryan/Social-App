@@ -25,7 +25,10 @@ import Logout from './logout';
 import Image from './Image';
 import Video from './Video';
 import Github from './Github';
+import Menu from './Menu';
 import DonarYape from './DonarYape';
+import Games from './Games';
+import Premium from './Premium';
 
 const icons = {
     home: Home,
@@ -53,20 +56,23 @@ const icons = {
     comunidad: Comunidad,
     explorar: Explorar,
     donarYape: DonarYape,
+    menu: Menu,
+    games: Games,
+    premium: Premium,
 
 }
 
-const Icon = ({name, ...props}) => {
+const Icon = ({name, style, ...props}) => {
     const IconComponent = icons[name];
-  return (
-    <IconComponent
-        height={props.size || 24}
-        width={props.size || 24}
-        strokeWidth={props.strokeWidth || 1.9}
-        color={theme.colors.textLight}
-        {...props}
-    />
-  )
+    return (
+        <IconComponent
+            height={props.size || 24}
+            width={props.size || 24}
+            strokeWidth={props.strokeWidth || 1.9}
+            color={props.color || theme.colors.textLight}
+            {...props}
+        />
+    )
 }
 
 export default Icon;

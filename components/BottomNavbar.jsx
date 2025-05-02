@@ -70,17 +70,17 @@ const BottomNavbar = ({ current, onMenuPress }) => {
       {/* Botón central destacado */}
       <View style={styles.menuButtonWrapper}>
         <AnimatedButton
-          iconName="plus" // Usa el icono que prefieras, por ejemplo "plus"
+          iconName="menu" // Usa el icono que prefieras, por ejemplo "plus"
           iconSize={hp(4.5)} // Más grande
           color={theme.colors.primary}
           onPress={onMenuPress}
         />
       </View>
       <AnimatedButton
-        iconName="mail"
+        iconName="premium"
         iconSize={hp(3.2)}
         color={current === "notifications" ? theme.colors.primary : "#b0b0b0"}
-        onPress={() => router.push("/notifications")}
+        onPress={() => router.push("/HomeMinimal")}
       />
       <AnimatedButton
         iconName="comunidad"

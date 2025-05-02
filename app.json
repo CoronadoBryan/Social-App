@@ -2,7 +2,7 @@
   "expo": {
     "name": "Catwise",
     "slug": "catwise",
-    "version": "1.0.0",
+    "version": "3.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icono.png",
     "scheme": "catwise",
@@ -20,7 +20,12 @@
         "foregroundImage": "./assets/images/icono.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.bryancito.catwise"
+      "package": "com.bryancito.catwise",
+      "versionCode": 3,
+      "permissions": [
+        "NOTIFICATIONS"
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -41,6 +46,11 @@
         "projectId": "c1841740-60de-4406-8da0-b921023cdf89"
       }
     },
-    "owner": "bryancito"
-  }
+    "owner": "bryancito",
+    "notification": {
+      "icon": "./assets/images/logoo.png",
+      "color": "#27ae60",
+      "androidSound": "./assets/sounds/notification.wav"
+    }
+  } 
 }

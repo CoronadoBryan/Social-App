@@ -1,8 +1,8 @@
-import { Alert, Linking, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import React, { useEffect } from "react";
 import ScreenWrapper from "../../components/ScreenWrapper";
 import { useAuth } from "../../contexts/AuthContext";
-import { getUserData, user } from "../../services/userService";
+import { getUserData, user, updateUser, handleOnPress } from "../../services/userService";
 import { supabase } from "../../lib/supabase";
 import { theme } from "../../constants/theme";
 import { hp, wp } from "../../helpers/common";
@@ -17,6 +17,7 @@ import PostCard from "../../components/PostCard";
 import Loading from "../../components/Loading";
 import BottomNavbar from "../../components/BottomNavbar";
 import MenuModal from "../../components/MenuModal"; // importa tu modal
+import * as Notifications from "expo-notifications";
 
 const Home = () => {
   const { user, setAuth } = useAuth();
@@ -29,12 +30,17 @@ const Home = () => {
   const [menuVisible, setMenuVisible] = useState(false);
 
   const handlePostEvent = async (payload) => {
-    console.log("post event", payload);
     if (payload.eventType == "INSERT" && payload?.new?.id) {
       let newPost = { ...payload.new };
       let res = await getUserData(newPost.userId);
       newPost.user = res.success ? res.data : {};
-      setPosts((prevPosts) => [newPost, ...prevPosts]);
+      setPosts((prevPosts) => {
+        // Evita duplicados por id
+        if (prevPosts.some(post => post.id === newPost.id)) {
+          return prevPosts;
+        }
+        return [newPost, ...prevPosts];
+      });
     }
   };
 
@@ -153,6 +159,23 @@ const Home = () => {
           refreshing={refreshing}
           onRefresh={onRefresh}
         />
+        {console.log("user.expo_push_token:", user?.expo_push_token)}
+        {!user?.expo_push_token && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#27ae60",
+              padding: 12,
+              borderRadius: 8,
+              alignItems: "center",
+              margin: 16,
+            }}
+            onPress={() => handleOnPress(user, setAuth)}
+          >
+            <Text style={{ color: "#fff", fontWeight: "bold" }}>
+              Forzar guardado de token
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
       <BottomNavbar current="home" onMenuPress={() => setMenuVisible(true)} />
 

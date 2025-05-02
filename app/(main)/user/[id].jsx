@@ -12,6 +12,7 @@ import { fetchPostsByUser } from "../../../services/postService";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { supabase } from "../../../lib/supabase";
 import { fetchInterests } from "../../../services/interestService";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export default function UserProfile() {
   const { id } = useLocalSearchParams();
@@ -20,6 +21,7 @@ export default function UserProfile() {
   const [posts, setPosts] = useState([]);
   const [userInterests, setUserInterests] = useState([]);
   const [liked, setLiked] = useState(false);
+  const { user: currentUser } = useAuth(); // <--- usuario autenticado
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -225,7 +227,7 @@ export default function UserProfile() {
         <Text style={styles.postsTitle}>Publicaciones</Text>
         {posts.length > 0 ? (
           posts.map((post) => (
-            <PostCard key={post.id} item={post} currentUser={user} router={router} />
+            <PostCard key={post.id} item={post} currentUser={currentUser} router={router} />
           ))
         ) : (
           <Text style={{ color: "#aaa", textAlign: "center", marginTop: 10 }}>No hay publicaciones públicas.</Text>

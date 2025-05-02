@@ -50,18 +50,19 @@ const MainLayout = () => {
     checkSession();
   });
 
+  
+
   useEffect(() => {
     // Aquí escuchamos si el usuario inicia o cierra sesión
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Cambio de sesión:", session);
       if (session) {
-        // Si el usuario está logueado, guardamos su info y lo mandamos al home
         setAuth(session?.user);
         updateUserData(session.user, session?.user?.email);
-        router.push("/home"); // <-- Cambiado a push
+        router.replace("/home");
       } else {
-        // Si el usuario no está logueado, lo mandamos a la pantalla de bienvenida
         setAuth(null);
-        router.push("/welcome"); // <-- Cambiado a push
+        router.replace("/welcome");
       }
     });
     // Cuando esta pantalla ya no se usa, dejamos de escuchar para ahorrar recursos

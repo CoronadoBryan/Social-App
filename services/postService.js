@@ -108,3 +108,28 @@ export const removePostLike = async (postId,userId) => {
     }
 };
 
+
+
+export const fetchPostsByUser = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        user:users (id,name,image),
+        postLikes(*, user:users(id,name,image))
+      `)
+      .eq('userId', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.log("fetchPostsByUser error", error);
+      return { success: false, error, msg: "Error al obtener los posts del usuario" };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error, msg: "Error al obtener los posts del usuario" };
+  }
+};

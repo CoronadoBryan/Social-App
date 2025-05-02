@@ -1,4 +1,4 @@
-import { Alert, Pressable, StyleSheet, Text, View , Image } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View , Image, BackHandler } from "react-native";
 import React, { useEffect, useState } from "react";
 import { ScrollView, FlatList } from "react-native";
 import ScreenWrapper from "../../components/ScreenWrapper";
@@ -71,11 +71,15 @@ const Profile = () => {
 
   const onLogout = async () => {
     setAuth(null);
+    // Si usas AsyncStorage o SecureStore para guardar datos, bórralos aquí:
+    // await AsyncStorage.clear();
+    // await SecureStore.deleteItemAsync('token');
     const { error } = await supabase.auth.signOut();
     if (error) {
       Alert.alert("Cerrar sesión", error.message);
+    } else {
+      BackHandler.exitApp(); // Cierra la app después de cerrar sesión
     }
-    // No navegues aquí
   };
 
   const handleLogout = async () => {
@@ -173,7 +177,7 @@ const UserHeader = ({ user, router, handleLogout, loading, posts, userInterests 
     <View style={styles.bioCard}>
       <Text style={styles.bioTitle}>Presentación</Text>
       <Text style={styles.bioText}>
-        {user?.bio || "¡Hola! Soy un usuario apasionado por la tecnología y el diseño. Me encanta compartir y aprender cosas nuevas cada día."}
+        {user?.bio || "Hola, Soy un nuevo usuario. ¡Bienvenido!"}
       </Text>
       {user?.address && (
         <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>

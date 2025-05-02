@@ -1,5 +1,5 @@
-import { ImageBackground, StyleSheet, Text, View, Pressable, Modal, Linking } from 'react-native'
-import React, { useState } from 'react'
+import { ImageBackground, StyleSheet, Text, View, Pressable, Modal, Linking, BackHandler } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import ScreenWrapper from '../components/ScreenWrapper'
 import { StatusBar } from 'expo-status-bar'
 import { wp, hp } from '../helpers/common'
@@ -8,8 +8,17 @@ import { useRouter } from 'expo-router'
 import { AntDesign, FontAwesome } from '@expo/vector-icons'
 
 const Welcome = () => {
-  const router = useRouter()
-  const [modalVisible, setModalVisible] = useState(false)
+  const router = useRouter();
+  const [modalVisible, setModalVisible] = useState(false);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      BackHandler.exitApp(); // Cierra la app
+      return true; // Previene volver atrás
+    };
+    BackHandler.addEventListener("hardwareBackPress", onBackPress);
+    return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+  }, []);
 
   const openLink = (url) => {
     Linking.openURL(url)

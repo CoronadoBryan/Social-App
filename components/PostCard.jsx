@@ -16,6 +16,7 @@ import { Share } from 'react-native';
 import CommentsModal from './CommentsModal'; // crea este componente
 import { fetchComments } from '../services/commentService'; // Asegúrate de importar esto
 import { useRouter } from "expo-router";
+import { useAuth } from "../contexts/AuthContext";
 
 /// Configurar moment para usar español
 moment.locale('es');
@@ -54,6 +55,7 @@ const PostCard = ({
     };
 
     const [likes, setLikes]= useState([]);
+    
     const [showLikesModal, setShowLikesModal] = useState(false);
     const [showImageModal, setShowImageModal] = useState(false);
     const [showComments, setShowComments] = useState(false);
@@ -61,8 +63,7 @@ const PostCard = ({
     const [lastComments, setLastComments] = useState([]);
 
     useEffect(() => {
-
-        setLikes(item?.postLikes);
+        setLikes(Array.isArray(item?.postLikes) ? item.postLikes : []);
         // Cargar los últimos comentarios y el contador
         const loadCommentsPreview = async () => {
             const res = await fetchComments(item.id);
@@ -119,10 +120,10 @@ const PostCard = ({
 
     // Formatear la fecha en español
     const created_at = moment(item?.created_at).format('dddd, D [de] MMMM [de] YYYY, h:mm a');
-    const liked=likes.filter(like=> like.userId == currentUser?.id)[0]? true: false;
+    const liked = Array.isArray(likes) && likes.filter(like => like.userId == currentUser?.id)[0] ? true : false;
     const MAX_VISIBLE_LIKES = 5;
-    const visibleLikes = item.postLikes.filter(like => like.user).slice(0, MAX_VISIBLE_LIKES);
-    const extraLikes = item.postLikes.length - visibleLikes.length;
+    const visibleLikes = Array.isArray(item.postLikes) ? item.postLikes.filter(like => like.user).slice(0, MAX_VISIBLE_LIKES) : [];
+    const extraLikes = (Array.isArray(item.postLikes) ? item.postLikes.length : 0) - visibleLikes.length;
 
     return (
         <View style={[styles.container, hasShadow && shadowStyles]}>
@@ -238,10 +239,10 @@ const PostCard = ({
                         </View>
                     </TouchableOpacity>
                 )}
-                {item.postLikes.length > 0 && (
-                    <Text style={{ fontSize: hp(1.5), color: theme.colors.textDark, marginLeft: 4 }}>
-                        {item.postLikes.length} {item.postLikes.length === 1 ? 'like' : 'likes'}
-                    </Text>
+                {(item.postLikes || []).length > 0 && (
+                  <Text style={{ fontSize: hp(1.5), color: theme.colors.textDark, marginLeft: 4 }}>
+                    {(item.postLikes || []).length} {(item.postLikes || []).length === 1 ? 'like' : 'likes'}
+                  </Text>
                 )}
 
                 {/* Modal para mostrar la lista completa */}
@@ -281,7 +282,7 @@ const PostCard = ({
                         Usuarios que dieron like
                     </Text>
                     <ScrollView style={{ width: '100%' }} contentContainerStyle={{ paddingBottom: 10 }}>
-                        {item.postLikes.filter(like => like.user).map(like => (
+                        {(item.postLikes || []).filter(like => like.user).map(like => (
                         <View
                             key={like.id || like.userId}
                             style={{
@@ -324,7 +325,7 @@ const PostCard = ({
                             </Text>
                         </View>
                         ))}
-                        {item.postLikes.filter(like => like.user).length === 0 && (
+                        {(item.postLikes || []).filter(like => like.user).length === 0 && (
                         <Text style={{ color: theme.colors.textLight, textAlign: 'center', marginTop: 20 }}>
                             Nadie ha dado like todavía.
                         </Text>

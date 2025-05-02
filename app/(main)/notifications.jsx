@@ -1,10 +1,11 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import React from 'react'
+import Recursos from '../../components/Recursos'
 
 const Notifications = () => {
   return (
-    <View>
-      <Text>Aun esta en proceso </Text>
+    <View style={{ flex: 1 }}>
+      <Recursos />
     </View>
   )
 }
