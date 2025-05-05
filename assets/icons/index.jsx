@@ -29,6 +29,12 @@ import Menu from './Menu';
 import DonarYape from './DonarYape';
 import Games from './Games';
 import Premium from './Premium';
+import DetallesPuntos from './DetallesPuntos';
+import CatPoint from './CatPoint';
+import Arriba from './Arriba';
+import Abajo from './Abajo';
+
+
 
 const icons = {
     home: Home,
@@ -59,6 +65,10 @@ const icons = {
     menu: Menu,
     games: Games,
     premium: Premium,
+    detallesPuntos: DetallesPuntos,
+    catPoint: CatPoint,
+    arriba: Arriba,
+    abajo: Abajo,
 
 }
 

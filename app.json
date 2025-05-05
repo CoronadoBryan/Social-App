@@ -2,7 +2,7 @@
   "expo": {
     "name": "Catwise",
     "slug": "catwise",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icono.png",
     "scheme": "catwise",
@@ -21,7 +21,7 @@
         "backgroundColor": "#000000"
       },
       "package": "com.bryancito.catwise",
-      "versionCode": 3,
+      "versionCode": 4,
       "permissions": [
         "NOTIFICATIONS"
       ],

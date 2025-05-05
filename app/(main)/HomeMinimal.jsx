@@ -7,7 +7,8 @@ import HomeHeader from '../../components/HomeHeader';
 import ScreenWrapper from "../../components/ScreenWrapper";
 import Loading from '../../components/Loading';
 import { useAuth } from '../../contexts/AuthContext';
-
+import { canDownloadResource, getUserData, getDailyDownloadLimit } from '../../services/userService';
+import CatPoints from '../../components/CatPoints'
 const carouselImages = [
   {
     url: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8',
@@ -37,37 +38,49 @@ const isNewResource = (dateString) => {
 
 
 const HomeMinimal = () => {
-  const { user } = useAuth(); // <--- agrega esto
+  const { user, setAuth } = useAuth();
   const router = useRouter();
-  const [resources, setResources] = useState([])
-  const [search, setSearch] = useState('')
-  const [filtered, setFiltered] = useState([])
-  const [modalVisible, setModalVisible] = useState(false)
-  const [modalImage, setModalImage] = useState(null)
+  const [attrModal, setAttrModal] = useState({ visible: false, attributes: [], title: '' });
+  const [resources, setResources] = useState([]);
+  const [catModal, setCatModal] = useState(false);
+  const [catSearch, setCatSearch] = useState('');
+  const [search, setSearch] = useState('');
+  const [filtered, setFiltered] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ visible: false, url: null });
-
-  const scrollX = useRef(new Animated.Value(0)).current
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const [descargasHoy, setDescargasHoy] = useState(user?.downloads_today || 0);
+  const [limit, setLimit] = useState(undefined);
 
   useEffect(() => {
-    fetchResources().then(setResources)
-  }, [])
+    fetchResources().then(setResources);
+  }, []);
 
   useEffect(() => {
     if (!search.trim()) {
-      setFiltered(resources)
+      setFiltered(resources);
     } else {
       setFiltered(
         resources.filter(r =>
-          r.tags?.join(' ').toLowerCase().includes(search.toLowerCase())
+          (r.title?.toLowerCase().includes(search.toLowerCase()) ||
+           r.description?.toLowerCase().includes(search.toLowerCase()) ||
+           r.tags?.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
+          )
         )
-      )
+      );
     }
-  }, [search, resources])
+  }, [search, resources]);
 
-  // Ordena los recursos por fecha descendente antes de agrupar
+  useEffect(() => {
+    setDescargasHoy(user?.downloads_today || 0);
+  }, [user?.downloads_today]);
+
+  useEffect(() => {
+    getDailyDownloadLimit().then(setLimit);
+  }, []);
+
   const filteredSorted = [...filtered].sort((a, b) => new Date(b._createdAt) - new Date(a._createdAt));
-
-  // Agrupa recursos por etiqueta
   const tagsMap = {};
   filteredSorted.forEach(resource => {
     resource.tags?.forEach(tag => {
@@ -79,9 +92,8 @@ const HomeMinimal = () => {
   const openImageModal = (imgUrl, desc) => {
     setModalImage({ url: imgUrl, desc });
     setModalVisible(true);
-  }
+  };
 
-  // Obtiene las 5 categorías más recientes
   const categoriesSorted = Object.keys(tagsMap)
     .sort((a, b) => {
       const lastA = tagsMap[a][0]?._createdAt || '';
@@ -90,7 +102,6 @@ const HomeMinimal = () => {
     })
     .slice(0, 5);
 
-  // Prepara los datos para FlatList principal
   const sections = [
     { type: 'carousel' },
     { type: 'categories', data: categoriesSorted },
@@ -98,7 +109,7 @@ const HomeMinimal = () => {
     ...Object.keys(tagsMap).map(tag => ({
       type: 'tag',
       tag,
-      data: tagsMap[tag].slice(0, 3) // sigue mostrando solo 3 recursos por categoría
+      data: tagsMap[tag].slice(0, 3)
     }))
   ];
 
@@ -157,26 +168,30 @@ const HomeMinimal = () => {
       );
     }
     if (item.type === 'categories') {
-      // Colores suaves para los cuadrados (puedes agregar más si tienes más categorías)
       const pastelColors = [
         '#FDEBD0', '#D6EAF8', '#D5F5E3', '#F9E79F', '#FADBD8', '#E8DAEF', '#FCF3CF'
       ];
       return (
         <View style={{ marginBottom: 18 }}>
-          <Text style={styles.sectionTitle}>Categorías recientes</Text>
-          <View style={styles.categoriesGridMinimal}>
-            {item.data.map((cat, idx) => (
-              <TouchableOpacity
-                key={cat}
-                style={[
-                  styles.categorySquareMinimal,
-                  { backgroundColor: pastelColors[idx % pastelColors.length] }
-                ]}
-              >
-                <Text style={styles.categorySquareTextMinimal}>{cat}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#f2f2f2',
+              borderRadius: 12,
+              paddingVertical: 10,
+              paddingHorizontal: 18,
+              alignSelf: 'flex-start',
+              marginLeft: 10,
+              marginBottom: 8,
+              flexDirection: 'row',
+              alignItems: 'center'
+            }}
+            onPress={() => setCatModal(true)}
+            activeOpacity={0.8}
+          >
+            <Icon name="search" size={18} color="#27ae60" style={{ marginRight: 8 }} />
+            <Text style={{ color: '#27ae60', fontWeight: 'bold', fontSize: 15 }}>Ver todas las categorías</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -198,9 +213,17 @@ const HomeMinimal = () => {
       return (
         <View style={{ margin: 10  }}>
           <View style={styles.sectionRow}>
-            <Text style={styles.sectionTitle}>{item.tag}</Text>
+            <Text
+              style={[styles.sectionTitle, { flex: 1, marginRight: 10 }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {item.tag}
+            </Text>
             <TouchableOpacity
-              onPress={() => router.push(`/categoria/${item.tag}`)}>
+              onPress={() => router.push(`/categoria/${item.tag}`)}
+              style={{ marginLeft: 4 }}
+            >
               <Text style={styles.seeAll}>Ver todos</Text>
             </TouchableOpacity>
           </View>
@@ -209,7 +232,6 @@ const HomeMinimal = () => {
             data={item.data}
             keyExtractor={resource => resource._id}
             renderItem={({ item: resource }) => {
-              console.log('RECURSO:', resource.title, resource._createdAt, isNewResource(resource._createdAt));
               return (
                 <View style={styles.resourceCard}>
                   <TouchableOpacity onPress={() => openImageModal(resource.coverImageUrl, resource.description)} style={{ position: 'relative' }}>
@@ -229,16 +251,47 @@ const HomeMinimal = () => {
                   </TouchableOpacity>
                   <View style={{ flex: 1, marginLeft: 16 }}>
                     <Text style={styles.resourceTitle}>{resource.title}</Text>
-                    {resource.fileUrl && (
-                      <TouchableOpacity
-                        style={styles.downloadBtnModern}
-                        onPress={() => setConfirmModal({ visible: true, url: resource.fileUrl })}
-                        activeOpacity={0.85}
-                      >
-                        <Icon name="share" size={18} color="#fff" style={styles.downloadIcon} />
-                        <Text style={styles.downloadBtnModernText}>Descargar</Text>
-                      </TouchableOpacity>
-                    )}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                      {resource.fileUrl && limit !== undefined && (
+                        <TouchableOpacity
+                          style={[
+                            styles.downloadBtnModern,
+                            (user && user.downloads_today >= limit && !user.is_premium) && { backgroundColor: '#ccc' }
+                          ]}
+                          onPress={() => {
+                            if (user && user.downloads_today >= limit && !user.is_premium) {
+                              alert(`Ya terminaste tus ${limit} descargas diarias`);
+                              return;
+                            }
+                            setConfirmModal({ visible: true, url: resource.fileUrl });
+                          }}
+                          activeOpacity={0.85}
+                          disabled={user && user.downloads_today >= limit && !user.is_premium}
+                        >
+                          <Icon name="share" size={18} color="#fff" style={styles.downloadIcon} />
+                          <Text style={styles.downloadBtnModernText}>
+                            {user && user.downloads_today >= limit && !user.is_premium ? 'Límite diario' : 'Descargar'}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {resource.attributes && resource.attributes.length > 0 && (
+                        <TouchableOpacity
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginLeft: 12,
+                            backgroundColor: '#f2f2f2',
+                            borderRadius: 20,
+                            paddingVertical: 8,
+                            paddingHorizontal: 16,
+                          }}
+                          onPress={() => setAttrModal({ visible: true, attributes: resource.attributes, title: resource.title })}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={{ color: '#27ae60', fontWeight: 'bold', fontSize: 15 }}>Ver info</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 </View>
               );
@@ -269,6 +322,8 @@ const HomeMinimal = () => {
     );
   }
 
+  console.log('USER CONTEXT:', user);
+
   return (
     <ScreenWrapper bg="white">
       <HomeHeader
@@ -279,6 +334,9 @@ const HomeMinimal = () => {
         showBack
       />
 
+      {user && !user.is_premium && (
+        <CatPoints descargasHoy={descargasHoy} />
+      )}
 
       {/* Botón regresar visual */}
       <View style={{ marginTop: 10, marginBottom: 2 }}>
@@ -417,6 +475,10 @@ const HomeMinimal = () => {
             </Text>
             <Text style={{ color: '#444', fontSize: 15, textAlign: 'center', marginBottom: 18 }}>
               ¿Quieres descargar este recurso ahora?
+              {"\n"}
+              <Text style={{ color: '#e67e22', fontWeight: 'bold' }}>
+                Al presionar "Descargar", se contará como una descarga, asi sea por accidente.
+              </Text>
             </Text>
             <View style={{ flexDirection: 'row', gap: 18 }}>
               <TouchableOpacity
@@ -427,9 +489,19 @@ const HomeMinimal = () => {
                   paddingHorizontal: 24,
                   marginRight: 8
                 }}
-                onPress={() => {
+                onPress={async () => {
                   setConfirmModal({ visible: false, url: null });
-                  if (confirmModal.url) Linking.openURL(confirmModal.url);
+                  // Aquí sí incrementa el contador y refresca el usuario
+                  const result = await canDownloadResource(user.id);
+                  if (!result.allowed) {
+                    alert(result.msg);
+                    return;
+                  }
+                  if (confirmModal.url) {
+                    Linking.openURL(confirmModal.url);
+                    const { data } = await getUserData(user.id);
+                    setAuth(data);
+                  }
                 }}
                 activeOpacity={0.8}
               >
@@ -448,6 +520,141 @@ const HomeMinimal = () => {
                 <Text style={{ color: '#27ae60', fontWeight: 'bold', fontSize: 16 }}>Cancelar</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={attrModal.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAttrModal({ visible: false, attributes: [], title: '' })}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.45)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderRadius: 18,
+            padding: 24,
+            minWidth: 280,
+            maxWidth: 340,
+            shadowColor: '#27ae60',
+            shadowOpacity: 0.18,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 }
+          }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 17, color: '#27ae60', marginBottom: 12 }}>
+              {attrModal.title}
+            </Text>
+            {attrModal.attributes
+              .sort((a, b) => a.key.localeCompare(b.key))
+              .map(attr => (
+                <View key={attr._key || attr.key} style={{ flexDirection: 'row', marginBottom: 6 }}>
+                  <Text style={{ color: '#3b5998', fontWeight: 'bold', fontSize: 14, marginRight: 6 }}>
+                    {attr.key}:
+                  </Text>
+                  <Text style={{ color: '#444', fontSize: 14, flexShrink: 1 }}>
+                    {attr.value}
+                  </Text>
+                </View>
+              ))}
+            <TouchableOpacity
+              style={{
+                marginTop: 18,
+                alignSelf: 'center',
+                backgroundColor: '#27ae60',
+                borderRadius: 12,
+                paddingVertical: 8,
+                paddingHorizontal: 28
+              }}
+              onPress={() => setAttrModal({ visible: false, attributes: [], title: '' })}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 15 }}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={catModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCatModal(false)}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.35)',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderRadius: 18,
+            padding: 18,
+            minWidth: 260,
+            maxWidth: 340,
+            maxHeight: 400,
+            shadowColor: '#27ae60',
+            shadowOpacity: 0.18,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 }
+          }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 17, color: '#27ae60', marginBottom: 10 }}>
+              Categorías
+            </Text>
+            <TextInput
+              placeholder="Buscar categoría..."
+              value={catSearch}
+              onChangeText={setCatSearch}
+              style={{
+                backgroundColor: '#f2f2f2',
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                marginBottom: 10,
+                fontSize: 15
+              }}
+              placeholderTextColor="#aaa"
+            />
+            <ScrollView style={{ maxHeight: 250 }}>
+              {Object.keys(tagsMap)
+                .filter(cat => cat.toLowerCase().includes(catSearch.toLowerCase()))
+                .sort()
+                .map(cat => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={{
+                      paddingVertical: 8,
+                      borderBottomWidth: 1,
+                      borderBottomColor: '#f0f0f0'
+                    }}
+                    onPress={() => {
+                      setCatModal(false);
+                      router.push(`/categoria/${cat}`);
+                    }}
+                  >
+                    <Text style={{ fontSize: 15, color: '#222' }}>{cat}</Text>
+                  </TouchableOpacity>
+                ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={{
+                marginTop: 14,
+                alignSelf: 'center',
+                backgroundColor: '#27ae60',
+                borderRadius: 10,
+                paddingVertical: 7,
+                paddingHorizontal: 28
+              }}
+              onPress={() => setCatModal(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 15 }}>Cerrar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

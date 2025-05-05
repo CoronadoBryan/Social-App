@@ -17,7 +17,8 @@ export const fetchResources = async () => {
     coverImageUrl,
     "fileUrl": file.asset->url,
     tipo,
-    _createdAt // <--- agrega esto
+    attributes,      // <--- agrega esta línea
+    _createdAt
   }`
   return await sanity.fetch(query)
 }

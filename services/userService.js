@@ -43,6 +43,33 @@ export const updateUser = async (userId, data) => {
   }
 };
 
+// Ejemplo de función para validar descargas diarias
+export const canDownloadResource = async (userId) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const { success, data: user } = await getUserData(userId);
+  if (!success) return { allowed: false, msg: "Error obteniendo usuario" };
+
+  // Obtén el límite desde la BD
+  const DAILY_DOWNLOAD_LIMIT = await getDailyDownloadLimit();
+
+  if (user.is_premium) {
+    return { allowed: true };
+  }
+  if (user.downloads_date !== today) {
+    await updateUser(userId, { downloads_today: 0, downloads_date: today });
+    user.downloads_today = 0;
+    user.downloads_date = today;
+  }
+  if (user.downloads_today >= DAILY_DOWNLOAD_LIMIT) {
+    return { allowed: false, msg: `Límite de ${DAILY_DOWNLOAD_LIMIT} descargas por día alcanzado` };
+  }
+  await updateUser(userId, {
+    downloads_today: user.downloads_today + 1,
+    downloads_date: today,
+  });
+  return { allowed: true, DAILY_DOWNLOAD_LIMIT };
+};
+
 export const handleOnPress = async (user, setAuth) => {
    console.log('DEBUG: handleOnPress ejecutado');
 
@@ -72,5 +99,32 @@ export const handleOnPress = async (user, setAuth) => {
     console.log('DEBUG: Usuario no disponible para guardar token');
     alert("Usuario no disponible");
   }
+};
+
+export const getDailyDownloadLimit = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('config')
+      .select('value')
+      .eq('key', 'daily_download_limit')
+      .single();
+    if (error) {
+      // Valor por defecto si hay error
+      return 5;
+    }
+    return parseInt(data.value, 10);
+  } catch {
+    return 5;
+  }
+};
+
+export const getMinAppVersion = async () => {
+  const { data, error } = await supabase
+    .from('config')
+    .select('value')
+    .eq('key', 'min_app_version')
+    .single();
+  console.log('getMinAppVersion - data:', data, 'error:', error); // <-- LOG AGREGADO
+  return data?.value || "1.0.0"; // Valor por defecto si no hay dato
 };
 

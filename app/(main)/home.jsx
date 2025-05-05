@@ -19,6 +19,10 @@ import BottomNavbar from "../../components/BottomNavbar";
 import MenuModal from "../../components/MenuModal"; // importa tu modal
 import * as Notifications from "expo-notifications";
 
+import Constants from 'expo-constants';
+import { getMinAppVersion } from "../../services/userService";
+import { compareVersions } from "../../utils/compareVersions";
+
 const Home = () => {
   const { user, setAuth } = useAuth();
   const router = useRouter();
@@ -28,6 +32,9 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [limit, setLimit] = useState(4);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(false);
+  const [minVersion, setMinVersion] = useState(null);
+  const [current, setCurrent] = useState('');
 
   const handlePostEvent = async (payload) => {
     if (payload.eventType == "INSERT" && payload?.new?.id) {
@@ -59,6 +66,17 @@ const Home = () => {
     return () => {
       supabase.removeChannel(postChannel); // Elimina el canal al desmontar el componente
     };
+  }, []);
+
+  useEffect(() => {
+    getMinAppVersion().then(min => {
+      setMinVersion(min);
+      const version = Constants.manifest?.version || Constants.expoConfig?.version || 'undefined';
+      setCurrent(version); // <-- Guarda la versión actual
+      if (compareVersions(version, min) < 0) {
+        setForceUpdate(true);
+      }
+    });
   }, []);
 
   const getPosts = async (reset = false) => {
@@ -97,6 +115,57 @@ const Home = () => {
     // ...otros casos
     setMenuVisible(false);
   };
+
+  if (forceUpdate) {
+    return (
+      <View style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        padding: 24,
+      }}>
+        <Icon name="heart" size={60} color="#e74c3c" style={{ marginBottom: 18 }} />
+        <Text style={{
+          fontSize: 22,
+          color: '#e74c3c',
+          fontWeight: 'bold',
+          marginBottom: 10,
+          textAlign: 'center'
+        }}>
+          ¡Actualización requerida!
+        </Text>
+        <Text style={{
+          color: '#444',
+          fontSize: 16,
+          marginBottom: 24,
+          textAlign: 'center'
+        }}>
+          Para seguir usando Catwise, debes actualizar a la versión más reciente.
+          {"\n\n"}
+          <Text style={{ color: '#888', fontSize: 15 }}>
+            Versión instalada: {current}{"\n"}
+            Versión requerida: {minVersion}
+          </Text>
+        </Text>
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#27ae60',
+            paddingVertical: 14,
+            paddingHorizontal: 32,
+            borderRadius: 10,
+            marginTop: 10,
+          }}
+          onPress={() => Linking.openURL('https://play.google.com/store/apps/details?id=com.bryancito.catwise')}
+          activeOpacity={0.85}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 17 }}>
+            Descargar última versión
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScreenWrapper bg="white">
